@@ -11,8 +11,13 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
     @Autowired
     private BookingService bookingService;
+
+    @GetMapping("/helloo")
+    public String getting(){
+        return "hey i am here";
+    }
     @PostMapping("/booking/{user_id}/{showtime_id}/{seat_id}")
-    public synchronized ResponseEntity<Object> booking_Movie(@PathVariable("user_id") Long user_id, @PathVariable("showtime_id") Long showtime_id, @PathVariable("seat_id")Long seat_id){
+    public  ResponseEntity<Object> booking_Movie(@PathVariable("user_id") Long user_id, @PathVariable("showtime_id") Long showtime_id, @PathVariable("seat_id")Long seat_id){
 //        idhar payment hoga
 //        payment ke basis pe hum logic define karenge
 //        abhi happy case matlab hogaya haui

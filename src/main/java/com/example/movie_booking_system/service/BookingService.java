@@ -44,8 +44,7 @@ public class BookingService {
         }
 
 
-        seat.setSeatAvailable(false);
-        seatsRepository.save(seat);
+
 
 
         Long ticketPrice = 250L;
@@ -54,6 +53,9 @@ public class BookingService {
 //        changes to be done to the booking schema that on successful payment
 //        there we can set tyhe payemnt id
 //        const payment_id=PaymentService.executePayment(arguments);
+
+        seat.setSeatAvailable(false);
+        seatsRepository.save(seat);
 
         Booking booking = new Booking(
         );
