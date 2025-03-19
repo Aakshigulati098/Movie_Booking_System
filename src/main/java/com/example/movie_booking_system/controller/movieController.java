@@ -1,8 +1,8 @@
 package com.example.movie_booking_system.controller;
 
-import com.example.movie_booking_system.models.movie;
-import com.example.movie_booking_system.repository.movieRepository;
-import com.example.movie_booking_system.service.movieService;
+import com.example.movie_booking_system.models.Movie;
+
+import com.example.movie_booking_system.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 public class movieController {
     @Autowired
-    private movieService movieService;
+    private MovieService movieService;
 
     @GetMapping("/hello")
     public String hello() {
@@ -30,7 +30,7 @@ public class movieController {
         }
     }
     @PostMapping("/addMovie")
-    public ResponseEntity<Object> addMovie(@RequestBody movie movie) {
+    public ResponseEntity<Object> addMovie(@RequestBody Movie movie) {
         return new ResponseEntity<>(movieService.addMovie(movie), HttpStatus.OK);
     }
 
