@@ -4,6 +4,7 @@ import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,19 +23,17 @@ public class BookingService {
     @Autowired
     private ShowTimeRepository showTimeRepository;
 
-//    payment ki service ka object hoga and payment ki function call hogi jis se mereko
-//    confirmatioin milegya ke yeh huya ke nahi and then i will get the id
+//    @Autowired
+//    private PaymentService paymentService; // Inject Payment Service
 
-    public synchronized Booking booking_Movie(Long user_id, Long showtime_id, Long seat_id) {
-
+    @Transactional
+    public Booking booking_Movie(Long user_id, Long showtime_id, Long seat_id) {
 
         User user = userRepository.findById(user_id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
 
-
         ShowTime showtime = showTimeRepository.findById(showtime_id)
                 .orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + showtime_id));
-
 
         Seats seat = seatsRepository.findById(seat_id)
                 .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seat_id));
@@ -43,30 +42,26 @@ public class BookingService {
             throw new RuntimeException("Seat is already booked!");
         }
 
-
-
-
-
         Long ticketPrice = 250L;
 
+        // Execute Payment
+//        boolean paymentSuccess = paymentService.executePayment(user, ticketPrice);
+//        if (!paymentSuccess) {
+//            throw new RuntimeException("Payment failed! Booking cannot proceed.");
+//        }
 
-//        changes to be done to the booking schema that on successful payment
-//        there we can set tyhe payemnt id
-//        const payment_id=PaymentService.executePayment(arguments);
-
+        // Mark seat as booked
         seat.setSeatAvailable(false);
         seatsRepository.save(seat);
 
-        Booking booking = new Booking(
-        );
-
+        // Create and save booking
+        Booking booking = new Booking();
         booking.setBooking_date(LocalDateTime.now());
         booking.setUser(user);
         booking.setSeat(seat);
-        booking.setAmount(1235L);
+        booking.setAmount(ticketPrice);
         booking.setShowtime(showtime);
 
-//        exception handling
         return bookingRepository.save(booking);
     }
 }
