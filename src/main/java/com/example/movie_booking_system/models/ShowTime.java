@@ -6,19 +6,19 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "showtime")
-public class showTime {
+public class ShowTime {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long showTime_id;
 
     @ManyToOne
     @JoinColumn(name = "movie_id",referencedColumnName = "id")
-    private movie movie;
+    private Movie movie;
 
     private Long theatre_id;
     private LocalDateTime showtime;
 
-    public showTime() {
+    public ShowTime() {
 
     }
 
@@ -30,11 +30,11 @@ public class showTime {
         this.showTime_id = showTime_id;
     }
 
-    public movie getMovie() {
+    public Movie getMovie() {
         return movie;
     }
 
-    public void setMovie(movie movie) {
+    public void setMovie(Movie movie) {
         this.movie = movie;
     }
 
@@ -54,7 +54,7 @@ public class showTime {
         this.showtime = showtime;
     }
 
-    public showTime(Long showTime_id, movie movie, Long theatre_id, LocalDateTime showtime) {
+    public ShowTime(Long showTime_id, Movie movie, Long theatre_id, LocalDateTime showtime) {
         this.showTime_id = showTime_id;
         this.movie = movie;
         this.theatre_id = theatre_id;

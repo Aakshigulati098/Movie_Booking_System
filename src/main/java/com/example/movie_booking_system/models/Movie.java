@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "movies")
-public class movie {
+public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -16,7 +16,7 @@ public class movie {
     private String language;
     private String imageUrl;  // array
 
-    public movie() {
+    public Movie() {
 
     }
 
@@ -84,7 +84,7 @@ public class movie {
         this.imageUrl = imageUrl;
     }
 
-    public movie(Long id, String title, Integer year, String genre, String summary, String description, String language, String imageUrl) {
+    public Movie(Long id, String title, Integer year, String genre, String summary, String description, String language, String imageUrl) {
         this.id = id;
         this.title = title;
         this.year = year;

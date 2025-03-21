@@ -1,7 +1,7 @@
 package com.example.movie_booking_system.controller;
 
-import com.example.movie_booking_system.models.seats;
-import com.example.movie_booking_system.service.seatsService;
+import com.example.movie_booking_system.models.Seats;
+import com.example.movie_booking_system.service.SeatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/seats")
 public class seatsController {
 
     @Autowired
-    private seatsService seatsService;
+    private SeatsService seatsService;
 
     // Endpoint to get all seats
     @GetMapping("/")
@@ -43,15 +42,15 @@ public class seatsController {
     }
 
     @PostMapping
-    public seats saveSeat(@RequestBody seats seat) {
+    public Seats saveSeat(@RequestBody Seats seat) {
         return seatsService.saveSeat(seat);
     }
     @PatchMapping("/{seatId}/availability")
-    public seats updateSeatAvailability(@PathVariable Long seatId, @RequestParam Boolean seat_available) {
+    public Seats updateSeatAvailability(@PathVariable Long seatId, @RequestParam Boolean seat_available) {
         return seatsService.updateSeatAvailability(seatId,seat_available);
     }
     @GetMapping("/showtime/{showtimeId}")
-    public List<seats> getSeatsByShowtime(@PathVariable Long showtimeId) {
+    public List<Seats> getSeatsByShowtime(@PathVariable Long showtimeId) {
         return seatsService.getSeatsByShowtime(showtimeId);
     }
 }
