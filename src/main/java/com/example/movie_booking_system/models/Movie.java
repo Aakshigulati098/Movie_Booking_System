@@ -1,31 +1,49 @@
 package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
-@Table(name = "movies")
-public class Movie {
+@Table(name = "movies")  // Explicit table name
+public class Movie {  // ✅ Class name should be capitalized
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ✅ Auto-increment ID
     private Long id;
+
+    @Column(nullable = false)
     private String title;
+
     private Integer year;
     private String genre;
+
+    @Column(length = 1000)  // ✅ Prevents truncation
     private String summary;
+
+    @Column(length = 2000)  // ✅ Stores long descriptions
     private String description;
+
     private String language;
-    private String imageUrl;  // array
 
-    public Movie() {
+      // ✅ Stores a list of image URLs
+    private String imageUrls;
 
+    // ✅ Default Constructor
+    public Movie() {}
+
+    // ✅ Constructor (without ID, since ID is auto-generated)
+    public Movie(String title, Integer year, String genre, String summary, String description, String language, String imageUrls) {
+        this.title = title;
+        this.year = year;
+        this.genre = genre;
+        this.summary = summary;
+        this.description = description;
+        this.language = language;
+        this.imageUrls = imageUrls;
     }
 
+    // ✅ Getters & Setters
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getTitle() {
@@ -76,22 +94,11 @@ public class Movie {
         this.language = language;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getImageUrls() {
+        return imageUrls;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Movie(Long id, String title, Integer year, String genre, String summary, String description, String language, String imageUrl) {
-        this.id = id;
-        this.title = title;
-        this.year = year;
-        this.genre = genre;
-        this.summary = summary;
-        this.description = description;
-        this.language = language;
-        this.imageUrl = imageUrl;
+    public void setImageUrls(String imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }

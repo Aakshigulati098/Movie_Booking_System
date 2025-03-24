@@ -1,7 +1,9 @@
 package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.models.Seats;
+
 import com.example.movie_booking_system.service.SeatsService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,15 +12,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+
+@CrossOrigin(origins = "http://localhost:5174")
 @RestController
 @RequestMapping("/seats")
-public class seatsController {
+public class SeatsController {
 
     @Autowired
     private SeatsService seatsService;
 
     // Endpoint to get all seats
-    @GetMapping("/")
+    @GetMapping("/allSeats")
     public ResponseEntity<Object> getAllSeats() {
 
         try{

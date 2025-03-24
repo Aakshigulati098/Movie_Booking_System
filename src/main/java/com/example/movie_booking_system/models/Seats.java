@@ -5,37 +5,35 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "seats")
 public class Seats {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long seat_id;
+    private Long id;  // ✅ Renamed from seat_id
 
     @ManyToOne
-    @JoinColumn(name = "showtime_id", referencedColumnName = "showtime_id", nullable = false)
-    private ShowTime showtime;
+    @JoinColumn(name = "showtime_id", referencedColumnName = "id", nullable = false)
+    private ShowTime showtime;  // ✅ Fixed field name and JoinColumn reference
 
-    // Use only one column for seat number (either seatNumber or seat_number)
-    @Column(name = "seat_number") // This tells JPA to map the seat_number column in DB
-    private String seatNumber; // Logical property name in your code
+    private Long seatNumber;  // ✅ Renamed from seat_number
+    private Boolean seatAvailable;  // ✅ Renamed from seat_available
 
-    private Boolean seat_available;
-
+    // ✅ Default constructor
     public Seats() {}
 
-    public Seats(Long seat_id, ShowTime showtime, String seatNumber, Boolean seat_available) {
-        this.seat_id = seat_id;
+    // ✅ Constructor
+    public Seats(Long id, ShowTime showtime, Long seatNumber, Boolean seatAvailable) {
+        this.id = id;
         this.showtime = showtime;
         this.seatNumber = seatNumber;
-        this.seat_available = seat_available;
+        this.seatAvailable = seatAvailable;
     }
 
-    // Getters and setters
-    public Long getSeat_id() {
-        return seat_id;
+    // ✅ Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    public void setSeat_id(Long seat_id) {
-        this.seat_id = seat_id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public ShowTime getShowtime() {
@@ -46,19 +44,21 @@ public class Seats {
         this.showtime = showtime;
     }
 
-    public String getSeatNumber() {
+    public Long getSeatNumber() {
         return seatNumber;
     }
 
-    public void setSeatNumber(String seatNumber) {
+    public void setSeatNumber(Long seatNumber) {
         this.seatNumber = seatNumber;
     }
 
-    public Boolean getSeat_available() {
-        return seat_available;
+    public Boolean getSeatAvailable() {
+        return seatAvailable;
     }
 
-    public void setSeat_available(Boolean seat_available) {
-        this.seat_available = seat_available;
+    public void setSeatAvailable(Boolean seatAvailable) {
+        this.seatAvailable = seatAvailable;
     }
+
+
 }

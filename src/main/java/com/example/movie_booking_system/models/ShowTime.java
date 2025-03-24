@@ -1,33 +1,49 @@
 package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "showtime")
-public class ShowTime {
+public class ShowTime {  // ✅ PascalCase for class name
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long showTime_id;
+    private Long id;
 
+    // ✅ Foreign key reference to Movie entity
     @ManyToOne
-    @JoinColumn(name = "movie_id",referencedColumnName = "id")
+    @JoinColumn(name = "movie_id", referencedColumnName = "id", nullable = false)
     private Movie movie;
 
-    private Long theatre_id;
+    private Long totalAmount;
+
+    // ✅ Foreign key reference to Theatre entity
+    @ManyToOne
+    @JoinColumn(name = "theatre_id", referencedColumnName = "id", nullable = false)
+    private Theatre theatre;
+
     private LocalDateTime showtime;
 
-    public ShowTime() {
+    // ✅ Default constructor
+    public ShowTime() {}
 
+    // ✅ Constructor
+    public ShowTime(Long id, Movie movie, Long totalAmount, Theatre theatre, LocalDateTime showtime) {
+        this.id = id;
+        this.movie = movie;
+        this.totalAmount = totalAmount;
+        this.theatre = theatre;
+        this.showtime = showtime;
     }
 
-    public Long getShowTime_id() {
-        return showTime_id;
+    // ✅ Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    public void setShowTime_id(Long showTime_id) {
-        this.showTime_id = showTime_id;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Movie getMovie() {
@@ -38,12 +54,20 @@ public class ShowTime {
         this.movie = movie;
     }
 
-    public Long getTheatre_id() {
-        return theatre_id;
+    public Long getTotalAmount() {
+        return totalAmount;
     }
 
-    public void setTheatre_id(Long theatre_id) {
-        this.theatre_id = theatre_id;
+    public void setTotalAmount(Long totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public Theatre getTheatre() {
+        return theatre;
+    }
+
+    public void setTheatre(Theatre theatre) {
+        this.theatre = theatre;
     }
 
     public LocalDateTime getShowtime() {
@@ -51,13 +75,6 @@ public class ShowTime {
     }
 
     public void setShowtime(LocalDateTime showtime) {
-        this.showtime = showtime;
-    }
-
-    public ShowTime(Long showTime_id, Movie movie, Long theatre_id, LocalDateTime showtime) {
-        this.showTime_id = showTime_id;
-        this.movie = movie;
-        this.theatre_id = theatre_id;
         this.showtime = showtime;
     }
 }

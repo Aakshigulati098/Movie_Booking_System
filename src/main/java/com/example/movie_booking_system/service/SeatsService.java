@@ -32,14 +32,14 @@ public class SeatsService {
         // Custom query can be added here if you need to find seats by showtime
         // For example, you could have a custom repository method or use JPQL/Criteria
         return seatsRepository.findAll().stream()
-                .filter(seat -> seat.getShowtime().getShowTime_id().equals(showtime_Id))
+                .filter(seat -> seat.getShowtime().getId().equals(showtime_Id))
                 .toList();
     }
     public Seats updateSeatAvailability(Long seat_Id, Boolean seat_available) {
         Optional<Seats> seatOpt = seatsRepository.findById(seat_Id);
         if (seatOpt.isPresent()) {
             Seats seat = seatOpt.get();
-            seat.setSeat_available(seat_available);  // Update the seat's availability
+            seat.setSeatAvailable(seat_available);  // Update the seat's availability
             return seatsRepository.save(seat);  // Save the updated seat back to the database
         }
         return null;
