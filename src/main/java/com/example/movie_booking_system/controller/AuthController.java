@@ -1,13 +1,12 @@
 package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.config.JwtProvider;
-import com.example.movie_booking_system.model.Users;
+import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import com.example.movie_booking_system.service.CustomUserDetails;
 import com.example.movie_booking_system.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Map;
 

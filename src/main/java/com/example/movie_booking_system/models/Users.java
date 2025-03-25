@@ -1,4 +1,4 @@
-package com.example.movie_booking_system.model;
+package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

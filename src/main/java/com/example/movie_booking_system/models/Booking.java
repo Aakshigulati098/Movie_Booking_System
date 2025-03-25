@@ -15,7 +15,7 @@ public class Booking {
 
     @ManyToOne
     @JoinColumn(name = "userId", referencedColumnName = "id", nullable = false)
-    private User user;
+    private Users user;
 
     @ManyToOne
     @JoinColumn(name = "showtimeId", referencedColumnName = "id", nullable = false)
@@ -40,11 +40,11 @@ public class Booking {
         this.id = id;
     }
 
-    public User getUser() {
+    public Users getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(Users user) {
         this.user = user;
     }
 
@@ -80,7 +80,7 @@ public class Booking {
         this.seat = seat;
     }
 
-    public Booking(Long id, User user, ShowTime showtime, Long amount, LocalDateTime booking_date, Seats seat) {
+    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, Seats seat) {
         this.id = id;
         this.user = user;
         this.showtime = showtime;
