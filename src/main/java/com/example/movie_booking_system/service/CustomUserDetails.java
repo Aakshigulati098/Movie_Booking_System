@@ -1,6 +1,6 @@
 package com.example.movie_booking_system.service;
 
-import com.example.movie_booking_system.model.Users;
+import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;

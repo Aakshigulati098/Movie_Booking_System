@@ -1,15 +1,14 @@
 package com.example.movie_booking_system.service;
 
+import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class BookingService {
@@ -43,7 +42,7 @@ public class BookingService {
     @Transactional
     public Booking booking_Movie(Long user_id, Long showtime_id, Long seat_number) {
 
-        User user = userRepository.findById(user_id)
+        Users user = userRepository.findById(user_id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
 
         ShowTime showtime = showTimeRepository.findById(showtime_id)

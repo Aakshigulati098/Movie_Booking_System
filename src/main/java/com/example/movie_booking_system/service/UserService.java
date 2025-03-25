@@ -1,7 +1,7 @@
 package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.emailotp.OtpEmailController;
-import com.example.movie_booking_system.model.Users;
+import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Map;
 import java.util.Random;
 
 @Service
