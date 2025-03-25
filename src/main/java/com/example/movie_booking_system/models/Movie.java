@@ -10,10 +10,12 @@ public class Movie {  // ✅ Class name should be capitalized
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // ✅ Auto-increment ID
     private Long id;
 
+    private String status; // Add this line
+
     @Column(nullable = false)
     private String title;
 
-    private Integer year;
+    private String releaseDate;
     private String genre;
 
     @Column(length = 1000)  // ✅ Prevents truncation
@@ -27,18 +29,27 @@ public class Movie {  // ✅ Class name should be capitalized
       // ✅ Stores a list of image URLs
     private String imageUrls;
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     // ✅ Default Constructor
     public Movie() {}
 
     // ✅ Constructor (without ID, since ID is auto-generated)
-    public Movie(String title, Integer year, String genre, String summary, String description, String language, String imageUrls) {
+    public Movie(String title, String releaseDate, String genre, String summary, String description, String language, String imageUrls,String status) {
         this.title = title;
-        this.year = year;
+        this.releaseDate = releaseDate;
         this.genre = genre;
         this.summary = summary;
         this.description = description;
         this.language = language;
         this.imageUrls = imageUrls;
+        this.status = status;
     }
 
     // ✅ Getters & Setters
@@ -54,12 +65,16 @@ public class Movie {  // ✅ Class name should be capitalized
         this.title = title;
     }
 
-    public Integer getYear() {
-        return year;
+    public String getReleaseDate() {
+        return releaseDate;
     }
 
-    public void setYear(Integer year) {
-        this.year = year;
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getGenre() {
@@ -100,5 +115,13 @@ public class Movie {  // ✅ Class name should be capitalized
 
     public void setImageUrls(String imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    public String getImage() {
+        return imageUrls.split(",")[0];
+    }
+
+    public String getType() {
+        return genre.split(",")[0];
     }
 }
