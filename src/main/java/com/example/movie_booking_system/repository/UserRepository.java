@@ -1,7 +1,11 @@
 package com.example.movie_booking_system.repository;
 
-import com.example.movie_booking_system.models.User;
+import com.example.movie_booking_system.model.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<Users, String> {
+    Users findByEmail(String email);
 }
+

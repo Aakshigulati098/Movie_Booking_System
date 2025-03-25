@@ -1,11 +1,15 @@
 package com.example.movie_booking_system.controller;
+import com.example.movie_booking_system.dto.MovieDTO;
 import com.example.movie_booking_system.models.Movie;
 import com.example.movie_booking_system.service.MovieService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -15,6 +19,7 @@ public class MovieController {
     private MovieService movieService;
 
 //    this is the hello world api to check if the server is running
+
     @GetMapping("//")
     public String home() {
         return "Welcome - You're connected to Spring Application 'Movie-Booking-System' ";
@@ -46,6 +51,24 @@ public class MovieController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/nowShowing")
+    public ResponseEntity<List<MovieDTO>> getNowShowingMovies() {
+        try {
+            return new ResponseEntity<>(movieService.nowShowing(), HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(null, e.getStatusCode());
+        }
+    }
+
+    @GetMapping("/comingSoon")
+    public ResponseEntity<List<MovieDTO>> getComingSoonMovies() {
+        try {
+            return new ResponseEntity<>(movieService.comingSoon(), HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(null, e.getStatusCode());
         }
     }
 }
