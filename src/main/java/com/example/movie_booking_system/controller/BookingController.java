@@ -1,11 +1,17 @@
 package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.models.Booking;
+import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.service.BookingService;
+import com.example.movie_booking_system.service.EmailSenderService;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 
 @CrossOrigin(origins = "http://localhost:5173")
@@ -15,6 +21,8 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    @Autowired
+    private EmailSenderService emailSenderService;
     @GetMapping("/helloo")
     public String getting(){
         return "hey i am here";
@@ -51,6 +59,55 @@ public class BookingController {
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
+    }
+
+    @DeleteMapping("/{bookingId}")
+    public String cancelBooking(@PathVariable Long bookingId) {
+        // Logic to cancel the booking
+        // Example:
+        String to = "user@example.com";
+        String userName = "User";
+        String movieName = "Example Movie";
+        String showTime = "4:00 PM";
+
+        try {
+            emailSenderService.sendCancellationEmail(to, userName, movieName, showTime);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return "Failed to send cancellation email.";
+        }
+
+        return "Booking canceled and email sent.";
+    }
+
+
+//    public Users orElseGet(Supplier<? extends Users> supplier) {
+//        return this != null ? this : supplier.get();
+//    }
+
+    // not tested yet just made
+//    @PostMapping("/bookSeats")
+//    public ResponseEntity<String> bookSeats(@RequestParam String userName,
+//                                            @RequestParam String userEmail,
+//                                            @RequestParam String theaterName,
+//                                            @RequestParam String movieName,
+//                                            @RequestParam List<Long> seats,
+//                                            @RequestParam Long showtimeId) {
+//        try {
+//            bookingService.bookSeats(userName, userEmail, theaterName, movieName, seats, showtimeId);
+//            return new ResponseEntity<>("Booking successful and confirmation email sent.", HttpStatus.OK);
+//        } catch (MessagingException e) {
+//            return new ResponseEntity<>("Failed to send confirmation email.", HttpStatus.INTERNAL_SERVER_ERROR);
+//        } catch (RuntimeException e) {
+//            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+//        }
+//    }
+
+    // not tested yet just made
+    @PostMapping("/paymentFailed")
+    public ResponseEntity<String> handlePaymentFailure(@RequestParam Long bookingId) {
+        bookingService.handlePaymentFailure(bookingId);
+        return new ResponseEntity<>("Payment failed. Redirecting to seats page.", HttpStatus.OK);
     }
 }
 

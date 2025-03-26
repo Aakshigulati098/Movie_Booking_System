@@ -3,11 +3,14 @@ package com.example.movie_booking_system.service;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -28,6 +31,8 @@ public class BookingService {
     @Autowired
     private ShowTimeRepository showTimeRepository;
 
+    @Autowired
+    private EmailSenderService emailSenderService;
 //    @Autowired
 //    private PaymentService paymentService; // Inject Payment Service
 
@@ -139,4 +144,51 @@ public class BookingService {
 
     }
 
+
+//    @Transactional
+//    public Booking bookSeats(String userName, String userEmail, String theaterName, String movieName, List<Long> seatNumbers, Long showtimeId) throws MessagingException {
+//        Users user = userRepository.findByEmail(userEmail)
+//                .orElseGet(() -> {
+//                    Users newUser = new Users();
+//                    newUser.setName(userName);
+//                    newUser.setEmail(userEmail);
+//                    return userRepository.save(newUser);
+//                });
+//
+//        ShowTime showtime = showTimeRepository.findById(showtimeId)
+//                .orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + showtimeId));
+//
+//        for (Long seatNumber : seatNumbers) {
+//            Long seatId = seatsRepository.findSeatIdBySeatNumberAndShowtime(seatNumber, showtimeId)
+//                    .orElseThrow(() -> new RuntimeException("Seat not found for seatNumber: " + seatNumber + " and showtimeId: " + showtimeId));
+//
+//            Seats seat = seatsRepository.findById(seatId)
+//                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+//
+//            if (!seat.getSeatAvailable()) {
+//                throw new RuntimeException("Seat " + seatNumber + " is already booked!");
+//            }
+//
+//            seat.setSeatAvailable(false);
+//            seatsRepository.save(seat);
+//
+//            Booking booking = new Booking();
+//            booking.setBooking_date(LocalDateTime.now());
+//            booking.setUser(user);
+//            booking.setSeat(seat);
+//            booking.setAmount(250L); // Example ticket price
+//            booking.setShowtime(showtime);
+//            bookingRepository.save(booking);
+//        }
+//
+//        emailSenderService.sendBookingConfirmationEmail(userEmail, userName, theaterName, movieName, showtime.getShowtime().toString(), seatNumbers.toString());
+//        return null;
+//}
+
+    // not tested
+    public void handlePaymentFailure(Long bookingId) {
+        // Logic to handle payment failure, e.g., mark booking as failed, release seats, etc.
+        // For now, just log the failure
+        System.out.println("Payment failed for booking ID: " + bookingId);
+    }
 }

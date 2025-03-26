@@ -8,6 +8,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -65,6 +69,40 @@ public class EmailSenderService {
         System.out.println("OTP Sent Successfully to " + toMail + " with OTP: " + otp);
     }
 
+    // cancellation mail
+    public void sendCancellationEmail(String to, String userName, String movieName, String showTime) throws MessagingException {
+        var message = mailSender.createMimeMessage();
+        var helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject("Booking Cancellation - " + movieName);
+        helper.setText("Dear " + userName + ",\n\nWe regret to inform you that your booking for the movie \"" + movieName + "\" scheduled at " + showTime + " has been canceled.\n\nWe apologize for any inconvenience caused.\n\nBest regards,\nMovie Booking Team");
+
+        mailSender.send(message);
+    }
+    //reminder email
+    public void sendReminderEmail(String to, String userName, String movieName, String showTime) throws MessagingException {
+        var message = mailSender.createMimeMessage();
+        var helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject("Reminder: Your Movie Booking");
+        helper.setText("Dear " + userName + ",\n\nThis is a reminder that your movie \"" + movieName + "\" is scheduled to start at " + showTime + ".\n\nEnjoy your movie!\n\nBest regards,\nMovie Booking Team");
+
+        mailSender.send(message);
+    }
+
+    // welcome email
+    public void sendWelcomeEmail(String to, String userName) throws MessagingException {
+        var message = mailSender.createMimeMessage();
+        var helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject("Welcome to Movie Booking System");
+        helper.setText("Dear " + userName + ",\n\nWelcome to our Movie Booking System! We are excited to have you with us.\n\nBest regards,\nMovie Booking Team");
+
+        mailSender.send(message);
+    }
     //TODO: Booking COnfirmation Sophisticated:
     public void sendBookingConfirmationEmail(String toMail,
                                              String userName,
@@ -108,7 +146,7 @@ public class EmailSenderService {
 
             String posterUrl = jsonResponse.substring(startIndex, endIndex);
             // Build the HTML content
-            String htmlContent = buildEmailTemplate(userName, theaterName, movieName, date, showTime, seatNumber, posterUrl);
+            String htmlContent = buildEmailTemplate(userName, theaterName, movieName,date, showTime, seatNumber, posterUrl);
             helper.setText(htmlContent, true); // Set "true" for HTML content
 
             // TODO:Confirm the poster URL --> Save The Poster Temporarily to buffer --> Send Poster As Attachment:
@@ -154,6 +192,7 @@ public class EmailSenderService {
             throw new RuntimeException(e);
         }
     }
+
 
 
     //TODO:Final Confirmation Mail html template:

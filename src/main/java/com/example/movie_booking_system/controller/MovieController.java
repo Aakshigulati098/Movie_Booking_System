@@ -71,4 +71,10 @@ public class MovieController {
             return new ResponseEntity<>(null, e.getStatusCode());
         }
     }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getUniqueCategories() {
+        List<String> categories = movieService.getUniqueCategories();
+        return new ResponseEntity<>(categories, HttpStatus.OK);
+    }
 }

@@ -88,4 +88,12 @@ public List<MovieDTO> getAllMovies() {
         }
         return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
+
+    public List<String> getUniqueCategories() {
+        List<Movie> movies = movieRepository.findAll();
+        return movies.stream()
+                .map(Movie::getGenre)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }
