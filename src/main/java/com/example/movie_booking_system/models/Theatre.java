@@ -2,19 +2,25 @@ package com.example.movie_booking_system.models;
 
 
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Entity
 @Table(name="theatre")
 public class Theatre {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    private String theatre_name;
-    private String pinCode;
+    private String name;
+    private String distance;
 
-    public Theatre() {}
+    public Theatre(Long id, String name, String distance) {
+        this.id = id;
+        this.name = name;
+        this.distance = distance;
+    }
+
     public Long getId() {
         return id;
     }
@@ -23,25 +29,23 @@ public class Theatre {
         this.id = id;
     }
 
-    public String getTheatre_name() {
-        return theatre_name;
+    public String getName() {
+        return name;
     }
 
-    public void setTheatre_name(String theatre_name) {
-        this.theatre_name = theatre_name;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getPinCode() {
-        return pinCode;
+    public String getDistance() {
+        return distance;
     }
 
-    public void setPinCode(String pinCode) {
-        this.pinCode = pinCode;
+    public void setDistance(String distance) {
+        this.distance = distance;
     }
+//    private String pinCode;
 
-    public Theatre(Long id, String theatre_name, String pinCode) {
-        this.id = id;
-        this.theatre_name = theatre_name;
-        this.pinCode = pinCode;
-    }
+    public Theatre() {}
+
 }

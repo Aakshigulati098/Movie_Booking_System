@@ -21,6 +21,7 @@ public class OtpEmailController {
 
 
         try {
+//            here the mail of otp is being sent !
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
             helper.setFrom("ashirvadpandey123@gmail.com");

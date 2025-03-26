@@ -5,8 +5,10 @@ import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import com.example.movie_booking_system.service.CustomUserDetails;
 import com.example.movie_booking_system.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,11 +16,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -37,32 +37,33 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private JwtProvider jwtProvider; // Autowired instance
 
-//    @PostMapping("/signup")
-//    public ResponseEntity<Users> signup(@Valid @RequestBody Users user) throws Exception {
-//
-//        Users isUserExist = userRepository.findByEmail(user.getEmail());
-//
-//        if(isUserExist!=null){
-//            throw new Exception("Email already exist with another account");
-//        }
-//
-//        Users newUser = new Users();
-//        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-//        newUser.setName(user.getName());
-//        newUser.setEmail(user.getEmail());
-//        newUser.setPhone(user.getPhone());
-//        newUser.setAddress(user.getAddress());
-//
-//        Users savedUser = userRepository.save(newUser);
-//
-//        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPassword());
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        String jwt = JwtProvider.generateToken(authentication);
-//
-//        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-//    }
+    @GetMapping("/validate-token")
+    public ResponseEntity<?> validateToken(HttpServletRequest request) {
+        try {
+            // Extract token from Authorization header
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token provided");
+            }
+
+            // Extract the token by removing "Bearer " prefix
+            String token = authHeader.substring(7);
+
+            // Validate the token
+            if (jwtProvider.validateToken(token)) {
+                // Optionally, you can return user details or additional info
+                return ResponseEntity.ok().body(new HashMap<>());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+        } catch (Exception e) {
+            // Log the exception for debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Token validation error");
+        }
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@Valid @RequestBody Users user){
@@ -86,10 +87,10 @@ public class AuthController {
         Authentication authentication = authenticate(user.getEmail(),user.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = JwtProvider.generateToken(authentication);
+        // Use the autowired jwtProvider instance to call generateToken
+        String jwt = jwtProvider.generateToken(authentication);
 
         return jwt;
-
     }
 
     private Authentication authenticate(String username, String password) {
@@ -103,5 +104,4 @@ public class AuthController {
 
         return new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
     }
-
 }

@@ -11,20 +11,41 @@ public class Seats {
 
     @ManyToOne
     @JoinColumn(name = "showtime_id", referencedColumnName = "id", nullable = false)
-    private ShowTime showtime;  // ✅ Fixed field name and JoinColumn reference
+    private ShowTime showtime;
 
-    private Long seatNumber;  // ✅ Renamed from seat_number
-    private Boolean seatAvailable;  // ✅ Renamed from seat_available
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
+    }
+
+    public String getSeatRow() {
+        return Seatrow;
+    }
+
+    public void setRow(String Seatrow) {
+        this.Seatrow = Seatrow;
+    }
+
+    private String section;
+    private String Seatrow;
+
+    private Long seatNumber;
+    private Boolean seatAvailable;
 
     // ✅ Default constructor
     public Seats() {}
 
     // ✅ Constructor
-    public Seats(Long id, ShowTime showtime, Long seatNumber, Boolean seatAvailable) {
+    public Seats(Long id, ShowTime showtime, Long seatNumber, Boolean seatAvailable,String row,String section) {
         this.id = id;
         this.showtime = showtime;
         this.seatNumber = seatNumber;
         this.seatAvailable = seatAvailable;
+        this.Seatrow=row;
+        this.section=section;
     }
 
     // ✅ Getters and Setters

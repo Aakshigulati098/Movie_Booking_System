@@ -12,32 +12,29 @@ public class ShowTime {  // ✅ PascalCase for class name
     private Long id;
 
     // ✅ Foreign key reference to Movie entity
-    @ManyToOne
-    @JoinColumn(name = "movie_id", referencedColumnName = "id", nullable = false)
-    private Movie movie;
 
-    private Long totalAmount;
+
+    private Long price;
 
     // ✅ Foreign key reference to Theatre entity
     @ManyToOne
     @JoinColumn(name = "theatre_id", referencedColumnName = "id", nullable = false)
     private Theatre theatre;
 
-    private LocalDateTime showtime;
+    private String time;
 
     // ✅ Default constructor
     public ShowTime() {}
 
-    // ✅ Constructor
-    public ShowTime(Long id, Movie movie, Long totalAmount, Theatre theatre, LocalDateTime showtime) {
+
+    public ShowTime(Long id, Long price, Theatre theatre, String time) {
         this.id = id;
-        this.movie = movie;
-        this.totalAmount = totalAmount;
-        this.theatre = theatre;
-        this.showtime = showtime;
+
+        this.price = price;
+
+        this.time = time;
     }
 
-    // ✅ Getters and Setters
     public Long getId() {
         return id;
     }
@@ -46,20 +43,14 @@ public class ShowTime {  // ✅ PascalCase for class name
         this.id = id;
     }
 
-    public Movie getMovie() {
-        return movie;
+
+
+    public Long getPrice() {
+        return price;
     }
 
-    public void setMovie(Movie movie) {
-        this.movie = movie;
-    }
-
-    public Long getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(Long totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setPrice(Long price) {
+        this.price = price;
     }
 
     public Theatre getTheatre() {
@@ -70,11 +61,11 @@ public class ShowTime {  // ✅ PascalCase for class name
         this.theatre = theatre;
     }
 
-    public LocalDateTime getShowtime() {
-        return showtime;
+    public String getTime() {
+        return time;
     }
 
-    public void setShowtime(LocalDateTime showtime) {
-        this.showtime = showtime;
+    public void setTime(String time) {
+        this.time = time;
     }
 }

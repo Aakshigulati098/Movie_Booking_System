@@ -37,9 +37,9 @@ public class MovieBookingSystemApplication {
 //		}
 
 // this is for otp sending
-	@EventListener(ApplicationReadyEvent.class)
-	public void triggerMail() throws MessagingException {
-		// Call the sendOtpEmail function
-		senderService.sendOtpEmail("abirsaha453@gmail.com", "Mannu");
-	}
+//	@EventListener(ApplicationReadyEvent.class)
+//	public void triggerMail() throws MessagingException {
+//		// Call the sendOtpEmail function
+//		senderService.sendOtpEmail("abirsaha453@gmail.com", "Mannu");
+//	}
 	}
