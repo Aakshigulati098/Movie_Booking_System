@@ -11,14 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Map;
 import java.util.Random;
 
 @Service
 public class UserService {
-
-    @Autowired
-    private HttpSession session;
 
     @Autowired
     private OtpEmailController otpEmailController;
@@ -29,7 +25,7 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public String signup(Users user){
+    public String signup(Users user, HttpSession session){
 
         Users isUserExist = userRepository.findByEmail(user.getEmail());
         if(isUserExist!=null){
@@ -43,7 +39,6 @@ public class UserService {
         newUser.setPhone(user.getPhone());
         newUser.setAddress(user.getAddress());
 
-        // TODO
         // Implement EMAIl OTP verification
         String otp = String.format("%04d", new Random().nextInt(10000));
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
@@ -52,12 +47,12 @@ public class UserService {
         session.setAttribute("otp", otp);
         session.setAttribute("otpExpiry", expiryTime);
 
+
         otpEmailController.sendOtpEmail(user.getName(), user.getEmail(), otp);
         return "Otp Sent Successfully";
     }
 
-    public ResponseEntity<String> verifyOtp(@RequestBody String inputOtp) {
-
+    public ResponseEntity<String> verifyOtp(@RequestBody String inputOtp, HttpSession session) {
         String sessionOtp = (String) session.getAttribute("otp");
         Long otpExpiry = (Long) session.getAttribute("otpExpiry");
 
@@ -80,6 +75,7 @@ public class UserService {
         Users savedUser = userRepository.save(newUser);
 
         return ResponseEntity.ok("OTP verified successfully!");
+
     }
 
 

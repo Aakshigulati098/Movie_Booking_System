@@ -5,6 +5,8 @@ import com.example.movie_booking_system.model.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import com.example.movie_booking_system.service.CustomUserDetails;
 import com.example.movie_booking_system.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,17 +17,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Iterator;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    @Autowired
+    private HttpSession session;
 
     @Autowired
     private UserRepository userRepository;
@@ -67,9 +69,9 @@ public class AuthController {
 //    }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@Valid @RequestBody Users user){
+    public ResponseEntity<String> signup(@Valid @RequestBody Users user, HttpSession session){
         try{
-            String message = userService.signup(user);
+            String message = userService.signup(user, session);
             return ResponseEntity.ok(message);
         }
         catch(RuntimeException e){
@@ -78,20 +80,18 @@ public class AuthController {
     }
 
     @PostMapping("verify-otp")
-    public ResponseEntity<String> verifyOtp(@Valid @RequestBody Map<String,String> request){
+    public ResponseEntity<String> verifyOtp(@Valid @RequestBody Map<String,String> request, @Autowired HttpSession session){
+        System.out.println(session.getAttributeNames());
         String inputOtp = request.get("otp");
-        return userService.verifyOtp(inputOtp);
+        return userService.verifyOtp(inputOtp, session);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody Users user){
+    public ResponseEntity<String> login(@RequestBody Users user){
         Authentication authentication = authenticate(user.getEmail(),user.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         String jwt = JwtProvider.generateToken(authentication);
-
-        return jwt;
-
+        return ResponseEntity.ok(jwt);
     }
 
     private Authentication authenticate(String username, String password) {
@@ -105,5 +105,15 @@ public class AuthController {
 
         return new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+        session.invalidate(); // Invalidate the session
+    }
+    return ResponseEntity.ok("Logout successful!");
+}
+
 
 }

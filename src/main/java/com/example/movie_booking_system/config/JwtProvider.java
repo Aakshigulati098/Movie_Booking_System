@@ -20,7 +20,7 @@ public class JwtProvider {
     public static String generateToken(Authentication auth){
 
         return Jwts.builder().setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime()+1000 * 60 * 60 * 10))
+                .setExpiration(new Date(new Date().getTime()+(1000 * 60 * 60 * 10)))
                 .claim("email", auth.getName())
                 .signWith(key)
                 .compact();
