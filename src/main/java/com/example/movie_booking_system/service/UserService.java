@@ -47,7 +47,6 @@ public class UserService {
         session.setAttribute("otp", otp);
         session.setAttribute("otpExpiry", expiryTime);
 
-
         otpEmailController.sendOtpEmail(user.getName(), user.getEmail(), otp);
         return "Otp Sent Successfully";
     }
@@ -73,6 +72,7 @@ public class UserService {
         session.removeAttribute("otpExpiry");
 
         Users savedUser = userRepository.save(newUser);
+        otpEmailController.sendWelcomeEmail(newUser.getName(), newUser.getEmail());
 
         return ResponseEntity.ok("OTP verified successfully!");
 

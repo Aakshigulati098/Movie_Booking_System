@@ -26,11 +26,11 @@ public class Users {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
+//    @NotBlank(message = "Phone number is required")
+//    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
     private String phone;
 
-    @NotBlank(message = "Address is required")
+//    @NotBlank(message = "Address is required")
     private String address;
 
     public Users(Long id, String name, String email, String password, String phone, String address) {
