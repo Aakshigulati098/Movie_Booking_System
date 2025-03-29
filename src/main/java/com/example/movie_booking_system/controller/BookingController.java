@@ -1,6 +1,7 @@
 package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.dto.BookingMovieDTO;
+import com.example.movie_booking_system.dto.BookingResponseDTO;
 import com.example.movie_booking_system.models.Booking;
 import com.example.movie_booking_system.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,16 @@ public class BookingController {
             return new ResponseEntity<Object>(bookingService.get_booking_details(user_id,boking_id),HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/getBooking/{userId}")
+    public ResponseEntity<Object> getAllBookings(@PathVariable("userId") Long userId) {
+        try {
+            List<BookingResponseDTO> bookings = bookingService.getAllBookings(userId);
+            return new ResponseEntity<>(bookings, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 }

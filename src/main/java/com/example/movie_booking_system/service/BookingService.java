@@ -1,5 +1,6 @@
 package com.example.movie_booking_system.service;
 
+import com.example.movie_booking_system.dto.BookingResponseDTO;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -271,4 +273,19 @@ public class BookingService {
                 Seats                   // SeatNumber
         );
     }
-}
+
+
+    public List<BookingResponseDTO> getAllBookings(Long userId) {
+        List<Booking> bookings = bookingRepository.findAllByUserId(userId);
+        return bookings.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    private BookingResponseDTO convertToDTO(Booking booking) {
+        return new BookingResponseDTO(
+                booking.getId(),
+                booking.getShowtime().getTheatre().getName(),
+                booking.getSeatIds(),
+                booking.getShowtime().getTime());
+    }
+
+    }
