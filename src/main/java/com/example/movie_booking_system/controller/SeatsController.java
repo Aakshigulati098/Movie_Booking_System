@@ -15,11 +15,16 @@ import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/seats")
+
 public class SeatsController {
 
     @Autowired
     private SeatsService seatsService;
+
+    @GetMapping("/abir")
+    public String getting(){
+        return "hey i am here working abir";
+    }
 
     // Endpoint to get all seats
     @GetMapping("/allSeats")
@@ -55,6 +60,7 @@ public class SeatsController {
     }
     @GetMapping("/showtime/{showtimeId}")
     public List<Seats> getSeatsByShowtime(@PathVariable Long showtimeId) {
+        System.out.println("hey i got called ");
         return seatsService.getSeatsByShowtime(showtimeId);
     }
 }

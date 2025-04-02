@@ -3,6 +3,7 @@ package com.example.movie_booking_system.models;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Entity
@@ -14,19 +15,17 @@ public class Booking {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "userId", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "userId", referencedColumnName = "id")
     private Users user;
 
     @ManyToOne
-    @JoinColumn(name = "showtimeId", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "showtimeId", referencedColumnName = "id")
     private ShowTime showtime;
 
     private Long amount;
     private LocalDateTime booking_date;
 
-    @ManyToOne
-    @JoinColumn(name = "seatId", referencedColumnName = "id", nullable = false)
-    private Seats seat;
+    private String seatIds;
 
     public Booking() {
 
@@ -72,20 +71,20 @@ public class Booking {
         this.booking_date = booking_date;
     }
 
-    public Seats getSeat() {
-        return seat;
+    public String getSeatIds() {
+        return seatIds;
     }
 
-    public void setSeat(Seats seat) {
-        this.seat = seat;
+    public void setSeatIds(String seatIds) {
+        this.seatIds = seatIds;
     }
 
-    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, Seats seat) {
+    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, String seat) {
         this.id = id;
         this.user = user;
         this.showtime = showtime;
         this.amount = amount;
         this.booking_date = booking_date;
-        this.seat = seat;
+        this.seatIds = seat;
     }
 }

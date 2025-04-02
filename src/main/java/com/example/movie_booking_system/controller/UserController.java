@@ -2,6 +2,7 @@ package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/user")
 public class UserController {
 
+//    @Autowired
     private final UserRepository userRepository;
 
     public UserController(UserRepository userRepository) {
@@ -16,6 +18,11 @@ public class UserController {
     }
 
     // ✅ GET USER PROFILE
+    @GetMapping("/{email}")
+    public Users getUser(@PathVariable String email){
+        System.out.println("Email: " + email);
+        return userRepository.findByEmail(email);
+    }
     @GetMapping("/profile")
     public Users getUserProfile(Authentication authentication) {
         String email = authentication.getName();

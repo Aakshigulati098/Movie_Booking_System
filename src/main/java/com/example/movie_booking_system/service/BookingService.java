@@ -1,23 +1,35 @@
 package com.example.movie_booking_system.service;
 
+import com.example.movie_booking_system.dto.BookingResponseDTO;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
 
     @Autowired
     private BookingRepository bookingRepository;
+    @Autowired
+    private TheatreRepository theatreRepository;
+
+    @Autowired
+    private MovieRepository movieRepository;
+
+    @Autowired
+    EmailSenderService emailSenderService;
 
     @Autowired
     private SeatsRepository seatsRepository;
@@ -31,8 +43,6 @@ public class BookingService {
     @Autowired
     private ShowTimeRepository showTimeRepository;
 
-    @Autowired
-    private EmailSenderService emailSenderService;
 //    @Autowired
 //    private PaymentService paymentService; // Inject Payment Service
 
@@ -43,52 +53,100 @@ public class BookingService {
     }
 
 
-//    need to handle the runtime exception here
+    //    need to handle the runtime exception here
     @Transactional
-    public Booking booking_Movie(Long user_id, Long showtime_id, Long seat_number) {
+    public boolean booking_Movie(Long user_id, List<Long> seatId,Long movie_id) throws MessagingException {
+
+        for(Long seat: seatId){
+            Seats seats = seatsRepository.findById(seat)
+                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+            if (!seats.getSeatAvailable()) {
+                throw new RuntimeException("Seat is already booked!");
+            }
+            ShowTime showtime = showTimeRepository.findById(seats.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seats.getShowtime().getId()));
+
+
+            // Mark seat as booked
+            seats.setSeatAvailable(false);
+            seatsRepository.save(seats);
+
+//            idhar tak ho gaya hai jo hona hai sare unavailable
+
+        }
+
+//        Users user = userRepository.findById(user_id)
+//                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
+//
+
+
 
         Users user = userRepository.findById(user_id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
 
-        ShowTime showtime = showTimeRepository.findById(showtime_id)
-                .orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + showtime_id));
+        String email = user.getEmail();
+        String name = user.getName();
 
-//        this will be throwing an exception so kindly handle it
-//        i am having issues with naming the return value of function while handling exception
-       Long seat_id = getSeatId(seat_number, showtime_id);
+        Seats seat = seatsRepository.findById(seatId.get(0)).orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId.get(0)));
+        ShowTime showtime = showTimeRepository.findById(seat.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
+        String showTime = showtime.getTime();
+        Theatre theatre = theatreRepository.findById(showtime.getTheatre().getId()).orElseThrow(() -> new RuntimeException("Theatre not found"));
+        String theatre_name = theatre.getName();
 
+        Movie movie = movieRepository.findById(movie_id).orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movie_id));
+        String movie_name = movie.getTitle();
+        LocalDate currentDate = LocalDate.now();
 
-        Seats seat = seatsRepository.findById(seat_id)
-                .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seat_id));
+        // Convert the date to a string using the default format (ISO-8601)
+        String dateString = currentDate.toString();
 
-        if (!seat.getSeatAvailable()) {
-            throw new RuntimeException("Seat is already booked!");
+        StringBuilder seatDetails = new StringBuilder();
+        for (Long seatIds : seatId) {
+            Seats s = seatsRepository.findById(seatIds)
+                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatIds));
+            seatDetails.append("Row: ").append(s.getSeatRow()).append(", Number: ").append(s.getSeatNumber()).append("; ");
         }
 
-        Long ticketPrice = 250L;
+//        booking ki entry banani hai
+        Booking booking =new Booking();
+        booking.setUser(user);
+        booking.setAmount(showtime.getPrice());
+        booking.setBooking_date(LocalDateTime.now());
+        booking.setSeatIds(seatDetails.toString());
+        booking.setShowtime(showtime);
+        booking.setUser(user);
+
+        bookingRepository.save(booking);
 
 
+//        send the mail only it is done !!!
+        triggerMail(email, name, theatre_name, movie_name, dateString, showTime, seatDetails.toString());
+
+
+//        ShowTime showtime = showTimeRepository.findById(seats.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
 
 
         // Mark seat as booked
-        seat.setSeatAvailable(false);
-        seatsRepository.save(seat);
+
+
+//        idhar se hi cheezo ko call kar dena hai
 
         // Create and save booking
-        Booking booking = new Booking();
-        booking.setBooking_date(LocalDateTime.now());
-        booking.setUser(user);
-        booking.setSeat(seat);
-        booking.setAmount(ticketPrice);
-        booking.setShowtime(showtime);
+//        Booking booking = new Booking();
+//        booking.setBooking_date(LocalDateTime.now());
+//        booking.setUser(user);
+//        booking.setSeat(seat);
+//        booking.setAmount(showtime.getPrice());
+//        booking.setShowtime(showtime);
 
-        return bookingRepository.save(booking);
+//        return bookingRepository.save(booking);
+
+        return true;
     }
 
-    public Booking get_booking_details(Long user_id,Long booking_id){
+    public Booking get_booking_details(Long user_id, Long booking_id) {
 
         Booking booking = bookingRepository.findById(booking_id).orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));//custom exception handling
-        if(!Objects.equals(booking.getUser().getId(), user_id)){
+        if (!Objects.equals(booking.getUser().getId(), user_id)) {
             throw new RuntimeException("User is not authorized to cancel this booking.");
         }
 
@@ -96,22 +154,11 @@ public class BookingService {
 
     }
 
-//    here i am using transactional not for concurrency but if for any reason the refund is failed
+    //    here i am using transactional not for concurrency but if for any reason the refund is failed
 //    i should keep the booking and not betray the user
 //    !TODO-> i need to provide useful responses to frontend such that proper experience is there for the user
     @Transactional
     public Boolean Cancelling_booking_movie(Long user_id, Long booking_id) {
-
-        //        here what i need to do is from this object will be going through the
-//            seat details and will be updating it to avaiable and this will also be
-//        transactional (i dont think so as no two person will have the same se
-
-//        mujhe param se userid aur booking id lena hai and then
-//        mujhe pehle check kar na hai ke isi user ne book ki hai ya nahi
-//        and then if yes then pehle mujhe seat avaialable karni hai
-//        and then booking table mai se woh details update karna hai by removing that booking
-
-
         // Fetch the booking, throw exception if not found
         Booking booking = bookingRepository.findById(booking_id)
                 .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));
@@ -121,14 +168,17 @@ public class BookingService {
             throw new RuntimeException("User is not authorized to cancel this booking.");
         }
 
-        // Mark seat as available
-        Seats seat = booking.getSeat();
-        seat.setSeatAvailable(true);
-        seatsRepository.save(seat);
+        // Parse seat details string to get seat information
+        String seatDetailsString = booking.getSeatIds();
+        List<Long> seatIds = parseSeatDetails(seatDetailsString);
 
-        //            abhi seat toh available kar diya
-//            now initiate refund
-//            on successful refund just remove this booking and can create  seperate table for such user for a specific buisness use case
+        // Mark seats as available
+        for (Long seatId : seatIds) {
+            Seats seat = seatsRepository.findById(seatId)
+                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+            seat.setSeatAvailable(true);
+            seatsRepository.save(seat);
+        }
 
         // TODO: Call the payment service for refund process
         boolean refundSuccessful = true;
@@ -139,56 +189,103 @@ public class BookingService {
             return true;
         } else {
             throw new RuntimeException("Refund failed, booking is retained.");
+        }
+    }
 
+    // Helper method to parse seat details string and extract seat IDs
+    private List<Long> parseSeatDetails(String seatDetailsString) {
+        List<Long> seatIds = new ArrayList<>();
+
+        // Split the seat details string into individual seat entries
+        String[] seatEntries = seatDetailsString.split(";");
+
+        for (String seatEntry : seatEntries) {
+            // Trim and split each seat entry to extract row and number
+            String[] parts = seatEntry.trim().split(",");
+
+            if (parts.length == 2) {
+                // Extract row and number (assuming format: "Row: A, Number: 5")
+                String rowPart = parts[0].trim();
+                String numberPart = parts[1].trim();
+
+                String row = rowPart.split(":")[1].trim();
+                String number = numberPart.split(":")[1].trim();
+
+                // Find the seat ID using row and number
+                Long seatId = seatsRepository.findSeatIdBySeatRowAndSeatNumber(row, Long.parseLong(number))
+                        .orElseThrow(() -> new RuntimeException("Seat not found with Row: " + row + ", Number: " + number));
+
+                seatIds.add(seatId);
+            }
         }
 
+        return seatIds;
     }
-
-
-//    @Transactional
-//    public Booking bookSeats(String userName, String userEmail, String theaterName, String movieName, List<Long> seatNumbers, Long showtimeId) throws MessagingException {
-//        Users user = userRepository.findByEmail(userEmail)
-//                .orElseGet(() -> {
-//                    Users newUser = new Users();
-//                    newUser.setName(userName);
-//                    newUser.setEmail(userEmail);
-//                    return userRepository.save(newUser);
-//                });
+//    public boolean SuccessfulEmailsending(Long userId, Long movieId, List<Long> seatIds) {
 //
-//        ShowTime showtime = showTimeRepository.findById(showtimeId)
-//                .orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + showtimeId));
+//        try {
+//            Users user = userRepository.findById(userId)
+//                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 //
-//        for (Long seatNumber : seatNumbers) {
-//            Long seatId = seatsRepository.findSeatIdBySeatNumberAndShowtime(seatNumber, showtimeId)
-//                    .orElseThrow(() -> new RuntimeException("Seat not found for seatNumber: " + seatNumber + " and showtimeId: " + showtimeId));
+//            String email = user.getEmail();
+//            String name = user.getName();
 //
-//            Seats seat = seatsRepository.findById(seatId)
-//                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+//            Seats seat = seatsRepository.findById(seatIds.get(0)).orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatIds.get(0)));
+//            ShowTime showtime = showTimeRepository.findById(seat.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
+//            String showTime = showtime.getTime();
+//            Theatre theatre = theatreRepository.findById(showtime.getTheatre().getId()).orElseThrow(() -> new RuntimeException("Theatre not found"));
+//            String theatre_name = theatre.getName();
 //
-//            if (!seat.getSeatAvailable()) {
-//                throw new RuntimeException("Seat " + seatNumber + " is already booked!");
+//            Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movieId));
+//            String movie_name = movie.getTitle();
+//            LocalDate currentDate = LocalDate.now();
+//
+//            // Convert the date to a string using the default format (ISO-8601)
+//            String dateString = currentDate.toString();
+//
+//            StringBuilder seatDetails = new StringBuilder();
+//            for (Long seatId : seatIds) {
+//                Seats s = seatsRepository.findById(seatId)
+//                        .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+//                seatDetails.append("Row: ").append(s.getSeatRow()).append(", Number: ").append(s.getSeatNumber()).append("; ");
 //            }
 //
-//            seat.setSeatAvailable(false);
-//            seatsRepository.save(seat);
+//            triggerMail(email, name, theatre_name, movie_name, dateString, showTime, seatDetails.toString());
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
 //
-//            Booking booking = new Booking();
-//            booking.setBooking_date(LocalDateTime.now());
-//            booking.setUser(user);
-//            booking.setSeat(seat);
-//            booking.setAmount(250L); // Example ticket price
-//            booking.setShowtime(showtime);
-//            bookingRepository.save(booking);
 //        }
 //
-//        emailSenderService.sendBookingConfirmationEmail(userEmail, userName, theaterName, movieName, showtime.getShowtime().toString(), seatNumbers.toString());
-//        return null;
-//}
+//        return true;
+//    }
 
-    // not tested
-    public void handlePaymentFailure(Long bookingId) {
-        // Logic to handle payment failure, e.g., mark booking as failed, release seats, etc.
-        // For now, just log the failure
-        System.out.println("Payment failed for booking ID: " + bookingId);
+    public void triggerMail(String email, String name, String theatre_name, String movie_name, String Date, String showtime, String Seats) throws MessagingException {
+//
+//
+
+        emailSenderService.sendBookingConfirmationEmail(
+                email,   // Recipient's email
+                name,           // UserName
+                theatre_name,               // TheaterName
+                movie_name,         // MovieName
+                Date,                // Date
+                showtime,                   // ShowTime
+                Seats                   // SeatNumber
+        );
     }
-}
+
+
+    public List<BookingResponseDTO> getAllBookings(Long userId) {
+        List<Booking> bookings = bookingRepository.findAllByUserId(userId);
+        return bookings.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    private BookingResponseDTO convertToDTO(Booking booking) {
+        return new BookingResponseDTO(
+                booking.getId(),
+                booking.getShowtime().getTheatre().getName(),
+                booking.getSeatIds(),
+                booking.getShowtime().getTime());
+    }
+
+    }
