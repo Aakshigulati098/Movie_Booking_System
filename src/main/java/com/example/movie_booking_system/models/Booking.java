@@ -23,9 +23,12 @@ public class Booking {
     private ShowTime showtime;
 
     private Long amount;
+
     private LocalDateTime booking_date;
 
     private String seatIds;
+
+    private boolean reminderSent = false;
 
     public Booking() {
 
