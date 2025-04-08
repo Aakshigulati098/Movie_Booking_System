@@ -2,7 +2,6 @@ package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.dto.BidResponseDTO;
-import com.example.movie_booking_system.models.Bids;
 import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,10 +13,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 public class RedisService {
+
+    private static final Logger logger = Logger.getLogger(RedisService.class.getName());
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -40,20 +42,74 @@ public class RedisService {
             return Collections.emptyMap();
         }
         return keys.stream()
-                .filter(key -> !key.contains(":bids") && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
+                .filter(key -> !key.contains(":bids")&& !key.contains(":user:") && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
                 .collect(Collectors.toMap(
                         key -> Long.parseLong(key.replace("auction", "")),
                         key -> redisTemplate.<String, String>opsForHash().entries(key)
                 ));
     }
+
     public void createLeaderboard(Long auctionId) {
+        // No need to initialize the ZSET, it will be created when the first bid is added
         String key = "auction" + auctionId + ":bids";
-        // No need to add null to initialize the ZSET
+        redisTemplate.expire(key, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS); // Set TTL for 24 hours
     }
-//    hey modify this function such that if bids is null that means the auctioin has just started and there is no
+
+    /**
+     * Add a bid to the leaderboard, ensuring only one entry per user
+     * If the user has already bid, their previous bid will be replaced
+     */
     public void addBidToLeaderboard(Long auctionId, BidDTO bid) {
         String key = "auction" + auctionId + ":bids";
+        String userKey = "auction:" + auctionId + ":user:" + bid.getUserId();
+
+        // First, check if this user has a previous bid in this auction
+        BidDTO existingBid = getUserBid(auctionId, bid.getUserId());
+
+        if (existingBid != null) {
+            // Remove the old bid
+            logger.info("Removing previous bid for user " + bid.getUserId() + " in auction " + auctionId);
+            redisTemplate.opsForZSet().remove(key, existingBid);
+        }
+
+        // Add the new bid
         redisTemplate.opsForZSet().add(key, bid, bid.getAmount());
+
+        // Store the user's latest bid in a separate key for quick lookup
+        redisTemplate.opsForValue().set(userKey, bid);
+        redisTemplate.expire(userKey, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS);
+
+        logger.info("Added/updated bid for user " + bid.getUserId() + " in auction " + auctionId + " with amount " + bid.getAmount());
+    }
+
+    /**
+     * Get a user's current bid for an auction
+     */
+    public BidDTO getUserBid(Long auctionId, Long userId) {
+        String userKey = "auction:" + auctionId + ":user:" + userId;
+        Object userBid = redisTemplate.opsForValue().get(userKey);
+
+        if (userBid != null) {
+            return (BidDTO) userBid;
+        }
+
+        // If not found in the direct lookup, search in the leaderboard
+        String leaderboardKey = "auction" + auctionId + ":bids";
+        Set<Object> bids = redisTemplate.opsForZSet().range(leaderboardKey, 0, -1);
+
+        if (bids != null) {
+            for (Object bidObj : bids) {
+                BidDTO bidDTO = (BidDTO) bidObj;
+                if (bidDTO.getUserId().equals(userId)) {
+                    // Cache this for future lookups
+                    redisTemplate.opsForValue().set(userKey, bidDTO);
+                    redisTemplate.expire(userKey, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS);
+                    return bidDTO;
+                }
+            }
+        }
+
+        return null;
     }
 
     public BidDTO getTopBid(Long auctionId) {
@@ -70,7 +126,6 @@ public class RedisService {
         return null; // Return null if there are no bids
     }
 
-    //    need to find what happened here
     public Set<BidResponseDTO> getLeaderboard(Long auctionId) {
         System.out.println("hey i am here in leaderboard");
         String key = "auction" + auctionId + ":bids";
@@ -93,4 +148,5 @@ public class RedisService {
             bidResponseDTO.setAmount(bidDTO.getAmount());
             return bidResponseDTO;
         }).collect(Collectors.toSet());
-    }}
+    }
+}
