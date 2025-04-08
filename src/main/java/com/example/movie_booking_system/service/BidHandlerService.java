@@ -53,21 +53,32 @@ public class BidHandlerService {
                 // Validate the bid
                 Optional<BidDTO> topBidOpt = Optional.ofNullable(redisService.getTopBid(auctionId));
 
+                // Check if the user is the auction owner
+                Long auctionIdd=bid.getAuctionId();
+                Long auctionOwnerId=auctionRepository.findById(auctionIdd)
+                        .orElseThrow(() -> new IllegalArgumentException("Auction not found"))
+                        .getSeller()
+                        .getId();
+
+                if (bid.getUserId().equals(auctionOwnerId)) {
+                    throw new IllegalArgumentException("You cannot bid on your own auction.");
+                }
+
+                // If there is a top bid, validate the new bid is higher
                 topBidOpt.ifPresent(topBid -> {
                     if (bid.getAmount() <= topBid.getAmount()) {
                         throw new IllegalArgumentException("Bid amount must be higher than the current highest bid.");
                     }
-                    if (topBid.getUserId().equals(bid.getUserId())) {
-                        throw new IllegalArgumentException("You cannot bid on your own auction.");
-                    }
                 });
 
+                // Check if the auction is active
                 String auctionStatus = (String) redisTemplate.opsForHash().get("auction" + auctionId, "status");
                 logger.info("Auction status: " + auctionStatus);
                 if (!"ACTIVE".equals(auctionStatus)) {
                     throw new IllegalArgumentException("Auction is not active.");
                 }
 
+                // Check if the auction has ended
                 String endTimeStr = (String) redisTemplate.opsForHash().get("auction" + auctionId, "endTime");
                 if (endTimeStr != null) {
                     LocalDateTime endTime = LocalDateTime.parse(endTimeStr);
@@ -76,14 +87,25 @@ public class BidHandlerService {
                     }
                 }
 
-                // Save the bid to the database
-                Bids bids = new Bids();
-                bids.setBidAmount(bid.getAmount());
-                bids.setUserId(userRepository.findById(bid.getUserId()).orElseThrow(() -> new IllegalArgumentException("User not found")));
-                bids.setAuctionId(auctionRepository.findById(bid.getAuctionId()).orElseThrow(() -> new IllegalArgumentException("Auction not found")));
-                bids.setCreatedAt(LocalDateTime.now());
-                bidsRepository.save(bids);
-                logger.info("Bid saved to database");
+                // Check if the user already has a bid for this auction
+                Optional<Bids> existingBid = bidsRepository.findByUserIdIdAndAuctionIdId(bid.getUserId(), bid.getAuctionId());
+
+                Bids bids;
+                if (existingBid.isPresent()) {
+                    // Update existing bid
+                    bids = existingBid.get();
+                    bids.setBidAmount(bid.getAmount());
+                    bids.setCreatedAt(LocalDateTime.now()); // Update timestamp to current time
+                    logger.info("Updating existing bid for user " + bid.getUserId() + " on auction " + bid.getAuctionId());
+                } else {
+                    // Create new bid
+                    bids = new Bids();
+                    bids.setBidAmount(bid.getAmount());
+                    bids.setUserId(userRepository.findById(bid.getUserId()).orElseThrow(() -> new IllegalArgumentException("User not found")));
+                    bids.setAuctionId(auctionRepository.findById(bid.getAuctionId()).orElseThrow(() -> new IllegalArgumentException("Auction not found")));
+                    bids.setCreatedAt(LocalDateTime.now());
+                    logger.info("Creating new bid for user " + bid.getUserId() + " on auction " + bid.getAuctionId());
+                }
 
                 // Update the Redis leaderboard
                 redisService.addBidToLeaderboard(auctionId, bid);
@@ -92,6 +114,9 @@ public class BidHandlerService {
                 // Broadcast the change via WebSocket
                 messagingTemplate.convertAndSend("/topic/auction/" + auctionId, "Leaderboard for auction " + auctionId + " has been updated.");
                 logger.info("WebSocket message sent");
+
+                bidsRepository.save(bids);
+                logger.info("Bid saved to database");
 
                 return true;
 

@@ -7,7 +7,6 @@ import com.example.movie_booking_system.dto.BidResponseDTO;
 import com.example.movie_booking_system.dto.createAuctionDTO;
 
 import com.example.movie_booking_system.models.Auction;
-import com.example.movie_booking_system.models.Booking;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.BookingRepository;
 import com.example.movie_booking_system.repository.UserRepository;
