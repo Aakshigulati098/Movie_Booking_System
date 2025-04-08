@@ -1,5 +1,6 @@
 package com.example.movie_booking_system.controller;
 
+import com.example.movie_booking_system.dto.UserDTO;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,13 @@ public class UserController {
 
     // ✅ UPDATE USER PROFILE
     @PutMapping("/update")
-    public String updateUserProfile(@RequestBody Users updatedUser, Authentication authentication) {
+    public String updateUserProfile(@RequestBody UserDTO updatedUser, Authentication authentication) {
+        System.out.println("Updating user profile: " + updatedUser);
+//        System.out.println("Email: " + updatedUser.getEmail());
+        System.out.println("Name: " + updatedUser.getName());
+        System.out.println("Phone: " + updatedUser.getPhone());
         String email = authentication.getName();
+//        System.out.println("Authenticated email: " + email);
         Users existingUser = userRepository.findByEmail(email);
 
         if (existingUser == null) {
@@ -41,7 +47,7 @@ public class UserController {
 
         existingUser.setName(updatedUser.getName());
         existingUser.setPhone(updatedUser.getPhone());
-        existingUser.setAddress(updatedUser.getAddress());
+//        existingUser.setEmail(updatedUser.getEmail());
         userRepository.save(existingUser);
 
         return "Profile updated successfully";

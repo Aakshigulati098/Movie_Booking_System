@@ -42,7 +42,7 @@ public class UserService {
         newUser.setPhone(user.getPhone());
         newUser.setAddress(user.getAddress());
 
-        // TODO
+        // TODO12q  Az
         // Implement EMAIl OTP verification
         String otp = String.format("%04d", new Random().nextInt(10000));
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
