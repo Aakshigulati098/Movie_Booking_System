@@ -2,6 +2,8 @@ package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.dto.BidResponseDTO;
+import com.example.movie_booking_system.models.Auction;
+import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,11 +29,18 @@ public class RedisService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuctionRepository auctionRepository;
+
     public void saveAuctionMetadata(Long auctionId, String status, LocalDateTime endTime) {
+//        !here this is my key basically for storing the auction status
         String key = "auction" + auctionId;
         redisTemplate.opsForHash().put(key, "status", status);
         redisTemplate.opsForHash().put(key, "endTime", endTime.toString());
-        redisTemplate.expire(key, TimeUnit.HOURS.toSeconds(1), TimeUnit.SECONDS); // Set TTL for 1 hour
+        long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), endTime).getSeconds());
+        redisTemplate.expire(key, secondsToExpire, TimeUnit.SECONDS); // Set TTL for 1 hour
+//        we are setting the ttl here so any thing related to expiry in terms of redis can be handled here
+//        we would reduce this  time to 2 min so that we can test the functionality
     }
 
     public Map<Long, Map<String, String>> getAllActiveAuctions() {
@@ -52,7 +61,13 @@ public class RedisService {
     public void createLeaderboard(Long auctionId) {
         // No need to initialize the ZSET, it will be created when the first bid is added
         String key = "auction" + auctionId + ":bids";
-        redisTemplate.expire(key, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS); // Set TTL for 24 hours
+
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+        long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
+
+        redisTemplate.expire(key, secondsToExpire, TimeUnit.SECONDS);
+//        here i am setting the ttl rather than at a place where i will have control over it so i think need to rethink on it a bit
     }
 
     /**
@@ -75,9 +90,13 @@ public class RedisService {
         // Add the new bid
         redisTemplate.opsForZSet().add(key, bid, bid.getAmount());
 
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+        long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
+
         // Store the user's latest bid in a separate key for quick lookup
         redisTemplate.opsForValue().set(userKey, bid);
-        redisTemplate.expire(userKey, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS);
+        redisTemplate.expire(userKey, secondsToExpire, TimeUnit.SECONDS);
 
         logger.info("Added/updated bid for user " + bid.getUserId() + " in auction " + auctionId + " with amount " + bid.getAmount());
     }
@@ -92,22 +111,33 @@ public class RedisService {
         if (userBid != null) {
             return (BidDTO) userBid;
         }
+//        agar userBid null hai toh fir toh user ne kabhi part liya hi nahi hai na ?
 
         // If not found in the direct lookup, search in the leaderboard
         String leaderboardKey = "auction" + auctionId + ":bids";
         Set<Object> bids = redisTemplate.opsForZSet().range(leaderboardKey, 0, -1);
 
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+        long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
+
         if (bids != null) {
             for (Object bidObj : bids) {
+                System.out.println("here the object bidObj is : " + bidObj);
                 BidDTO bidDTO = (BidDTO) bidObj;
+                System.out.println("here the bidDTO is: " + bidDTO);
+
+//                if i am getting a bid match then what am i sending here should not i directly send ?
                 if (bidDTO.getUserId().equals(userId)) {
                     // Cache this for future lookups
                     redisTemplate.opsForValue().set(userKey, bidDTO);
-                    redisTemplate.expire(userKey, TimeUnit.HOURS.toSeconds(24), TimeUnit.SECONDS);
+                    redisTemplate.expire(userKey, secondsToExpire, TimeUnit.SECONDS);
                     return bidDTO;
                 }
             }
         }
+
+//so if the user has never taken part i am absolutely sure here and that is the reason why i am sending nul here
 
         return null;
     }

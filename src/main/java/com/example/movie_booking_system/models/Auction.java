@@ -16,6 +16,16 @@ public class Auction {
     @JoinColumn(name="bookingId", referencedColumnName = "id")
     private Booking bookingId;
 
+    private Long FinalAmount;
+
+    public Long getFinalAmount() {
+        return FinalAmount;
+    }
+
+    public void setFinalAmount(Long finalAmount) {
+        FinalAmount = finalAmount;
+    }
+
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="sellerId", referencedColumnName = "id")
     private Users Seller;
@@ -99,8 +109,9 @@ public class Auction {
     }
 
 
-    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long min_Amount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt) {
+    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long min_Amount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt,Long FinalAmount) {
         this.id = id;
+        this.FinalAmount = FinalAmount;
         this.bookingId = bookingId;
         Seller = seller;
         Winner = winner;
