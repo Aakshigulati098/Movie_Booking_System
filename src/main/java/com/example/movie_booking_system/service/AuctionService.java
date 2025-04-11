@@ -50,7 +50,7 @@ public class AuctionService {
             auction.setMin_Amount(Incomingauction.getMinAmount());
             auction.setSeller(userRepository.findById(Incomingauction.getUserId()).orElse(null));
             // Set the end time to 1 hour from now
-            auction.setEndsAt(LocalDateTime.now().plusSeconds(300)); //i have set this auction for 2 minutes
+            auction.setEndsAt(LocalDateTime.now().plusSeconds(120)); //i have set this auction for 2 minutes
             // Set the booking ID
             auction.setBookingId(bookingRepository.findById(Incomingauction.getBookingId()).orElse(null));
 

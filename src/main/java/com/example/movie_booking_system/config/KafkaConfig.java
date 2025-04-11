@@ -7,6 +7,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +46,15 @@ public class KafkaConfig {
                 .replicas(1)
                 .build();
     }
+    @Bean
+    public NewTopic WinnerNotifyTopic() {
+        return TopicBuilder.name("auction.winner.notify")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+//    jab multiple bean ki jarurat hoti hai then we name the bean and then solve that problem
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
@@ -71,6 +81,21 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
+    @Bean(name = "stringProducerFactory")
+    public ProducerFactory<String, String> stringProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean(name = "stringKafkaTemplate")
+    public KafkaTemplate<String, String> stringKafkaTemplate(
+            @Qualifier("stringProducerFactory") ProducerFactory<String, String> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
     @Bean
     public ConsumerFactory<String, AuctionResultDTO> consumerFactory(KafkaProperties kafkaProperties) {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
@@ -86,6 +111,25 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, AuctionResultDTO> kafkaListenerContainerFactory(
             ConsumerFactory<String, AuctionResultDTO> consumerFactory) {
         ConcurrentKafkaListenerContainerFactory<String, AuctionResultDTO> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory);
+        return factory;
+    }
+
+    @Bean(name = "stringConsumerFactory")
+    public ConsumerFactory<String, String> stringConsumerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean(name = "stringKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, String> stringKafkaListenerContainerFactory(
+            @Qualifier("stringConsumerFactory") ConsumerFactory<String, String> consumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         return factory;

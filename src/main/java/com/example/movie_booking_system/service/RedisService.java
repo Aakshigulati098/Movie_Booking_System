@@ -6,12 +6,14 @@ import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -47,11 +49,8 @@ public class RedisService {
         System.out.println("hey i am here in getAllActiveAuctions redis");
         Set<String> keys = redisTemplate.keys("auction*");
         System.out.println("Keys of all active auctions: " + keys);
-        if (keys == null) {
-            return Collections.emptyMap();
-        }
         return keys.stream()
-                .filter(key -> !key.contains(":bids")&& !key.contains(":user:") && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
+                .filter(key -> !key.contains(":bids")&& !key.contains(":user:") &&!key.contains(":leaderboard") && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
                 .collect(Collectors.toMap(
                         key -> Long.parseLong(key.replace("auction", "")),
                         key -> redisTemplate.<String, String>opsForHash().entries(key)
@@ -170,13 +169,65 @@ public class RedisService {
             if (bidDTO == null) {
                 throw new IllegalArgumentException("Invalid bid data for auction ID: " + auctionId);
             }
+
             BidResponseDTO bidResponseDTO = new BidResponseDTO();
+            bidResponseDTO.setBidderId(bidDTO.getUserId());
             bidResponseDTO.setAuctionId(bidDTO.getAuctionId().toString());
             bidResponseDTO.setBidder(userRepository.findById(bidDTO.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + bidDTO.getUserId()))
                     .getName());
+            System.out.println("the bidder is here in redis service "+bidResponseDTO.getBidder());
             bidResponseDTO.setAmount(bidDTO.getAmount());
             return bidResponseDTO;
         }).collect(Collectors.toSet());
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public void createAndSaveLeaderboard(Long auctionId, Set<BidResponseDTO> leaderboard) {
+        String key = "auction:" + auctionId + ":leaderboard";
+
+//        here we are skipping type checking so make sure you are figuring out the right thing
+        Set<ZSetOperations.TypedTuple<Object>> redisTuples = new HashSet<>();
+
+        for (BidResponseDTO bid : leaderboard) {
+            redisTuples.add(new DefaultTypedTuple<>(bid, (double) bid.getAmount()));
+        }
+
+        redisTemplate.opsForZSet().add(key, redisTuples);
+        redisTemplate.expire(key, 1, TimeUnit.HOURS);
+    }
+
+    public BidDTO getTopBidForKafka(Long auctionId) {
+        String key = "auction:" + auctionId + ":leaderboard";
+        Set<ZSetOperations.TypedTuple<Object>> topBids = redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 0);
+        logger.info("Fetching top bids for auctionId: " + auctionId);
+
+        if (topBids != null && !topBids.isEmpty()) {
+            ZSetOperations.TypedTuple<Object> topBid = topBids.iterator().next();
+            if (topBid != null && topBid.getValue() instanceof BidResponseDTO responseDTO) {
+
+                // Convert to BidDTO manually
+                BidDTO bidDTO = new BidDTO();
+                bidDTO.setUserId(responseDTO.getBidderId());
+                bidDTO.setAmount(responseDTO.getAmount());
+                bidDTO.setAuctionId(auctionId); // if needed and not already set
+
+                return bidDTO;
+            } else {
+                logger.warning("Top bid is not of type BidResponseDTO for auctionId: " + auctionId);
+            }
+        } else {
+            logger.info("No bids found in Redis leaderboard for auctionId: " + auctionId);
+        }
+
+        return null;
+    }
+
+
+    public void deleteBidderFromLeaderboard(BidDTO bidDTO) {
+        String key="auction:"+bidDTO.getAuctionId()+":leaderboard";
+        // Remove the user's bid from the leaderboard
+        redisTemplate.opsForZSet().remove(key, bidDTO.getUserId());
     }
 }

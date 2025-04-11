@@ -14,10 +14,12 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,18 +81,33 @@ public class AuctionExpiry implements MessageListener {
 
                 System.out.println("the winning bid here is "+result.getWinningBid());
                 System.out.println("the auction id here is "+result.getAuctionId());
-//                System.out.println("the winning bid here is "+result.getWinningBid());
 
-                System.out.println("the leaderboard here is "+result.getLeaderboard());
+                Set<BidResponseDTO> leaderboard = result.getLeaderboard();
 
-                Set<BidResponseDTO> lederboard = result.getLeaderboard();
-                for (BidResponseDTO bid : lederboard) {
-                    System.out.println("Bidder : " + bid.getBidder() + ", Amount: " + bid.getAmount()+ ", Auction ID: " + bid.getAuctionId());
+// Convert Set to List for sorting
+                List<BidResponseDTO> sortedLeaderboard = new ArrayList<>(leaderboard);
+
+// Sort by amount (assuming higher bids should come first)
+                sortedLeaderboard.sort((bid1, bid2) -> {
+                    return bid2.getAmount().compareTo(bid1.getAmount()); // Descending order
+                });
+                for (BidResponseDTO bid : sortedLeaderboard) {
+                    System.out.println("BidderId : " + bid.getBidderId()+ ", Bidder : " + bid.getBidder() + ", Amount: " + bid.getAmount()+ ", Auction ID: " + bid.getAuctionId());
                 }
 
                 // Publish result to Kafka
                 logger.info("Publishing auction result to Kafka for auction: " + auctionId);
-                kafkaTemplate.send(expiredAuctionTopic, auctionId.toString(), result);
+//                kafkaTemplate.send(expiredAuctionTopic, auctionId.toString(), result);
+                CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(expiredAuctionTopic, auctionId.toString(), result);
+
+                future.whenComplete((sendResult, ex) -> {
+                    if (ex != null) {
+                        logger.severe("Failed to publish auction result for auctionId: " + auctionId + ", error: " + ex.getMessage());
+                        ex.printStackTrace();
+                    } else {
+                        logger.info("Successfully published auction result to Kafka for auctionId: " + auctionId);
+                    }
+                });
             } else {
                 logger.info("No bids found for expired auction: " + auctionId);
 
