@@ -1,10 +1,7 @@
 package com.example.movie_booking_system.controller;
 
 
-import com.example.movie_booking_system.dto.AuctionResponseDTO;
-import com.example.movie_booking_system.dto.BidDTO;
-import com.example.movie_booking_system.dto.BidResponseDTO;
-import com.example.movie_booking_system.dto.createAuctionDTO;
+import com.example.movie_booking_system.dto.*;
 
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.Users;
@@ -127,14 +124,14 @@ public class AuctionController {
             // Create ResponseDTO
             AuctionResponseDTO response = new AuctionResponseDTO();
             System.out.println("response here is : " + response);
-            response.setId(auction.getId());
+
 //        Booking booking = bookingRepository.findById(auction.getBookingId());
 
 //bhai movie ke liye to entity mai changes karne hi padenge and we have got no other option
 //        response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
+            response.setId(auction.getId());
             response.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
-
-            response.setShowtime(auction.getBookingId().getShowtime().toString());
+            response.setShowtime(auction.getBookingId().getShowtime().getTime());
             response.setSeat(auction.getBookingId().getSeatIds());
             response.setSellerName(auction.getSeller().getName());
             response.setBasePrice(auction.getMin_Amount());
@@ -161,6 +158,8 @@ public class AuctionController {
 //        response.setImageUrl(auction.getBookingId().getMovie().getImageUrl());
 //        response.setDescription(auction.getBookingId().getMovie().getDescription());
             response.setBids(new ArrayList<>(bids));
+            response.setImageUrl(auction.getBookingId().getMovie().getImage());
+            response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
 
             return response;
         }).collect(Collectors.toList());
@@ -203,7 +202,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
     AuctionResponseDTO response = new AuctionResponseDTO();
     response.setId(auction.getId());
     response.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
-    response.setShowtime(auction.getBookingId().getShowtime().toString());
+    response.setShowtime(auction.getBookingId().getShowtime().getTime());
     response.setSeat(auction.getBookingId().getSeatIds());
     response.setSellerName(auction.getSeller().getName());
     response.setBasePrice(auction.getMin_Amount());
@@ -225,7 +224,23 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
 
     response.setEndTime(auction.getEndsAt());
     response.setBids(new ArrayList<>(bids));
+    response.setImageUrl(auction.getBookingId().getMovie().getImage());
+    response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
 
     return ResponseEntity.ok(response);
 }
+    @GetMapping("/pending-payment/{userId}")
+    public ResponseEntity<?> getPendingPayments(@PathVariable Long userId) {
+        try {
+            List<PendingAuctionDTO> pendingPayments = auctionService.getPendingPayments(userId);
+            if (!pendingPayments.isEmpty()) {
+                return ResponseEntity.ok(pendingPayments);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching pending payments: " + e.getMessage());
+        }
+    }
 }

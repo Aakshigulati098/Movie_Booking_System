@@ -186,8 +186,12 @@ public class RedisService {
     @SuppressWarnings("unchecked")
     public void createAndSaveLeaderboard(Long auctionId, Set<BidResponseDTO> leaderboard) {
         String key = "auction:" + auctionId + ":leaderboard";
+        if (leaderboard == null || leaderboard.isEmpty()) {
+            // Log or handle the case when there are no bids
+            System.out.println("No bids for auction ID: " + auctionId + ", skipping Redis leaderboard save.");
+            return;
+        }
 
-//        here we are skipping type checking so make sure you are figuring out the right thing
         Set<ZSetOperations.TypedTuple<Object>> redisTuples = new HashSet<>();
 
         for (BidResponseDTO bid : leaderboard) {
@@ -197,6 +201,7 @@ public class RedisService {
         redisTemplate.opsForZSet().add(key, redisTuples);
         redisTemplate.expire(key, 1, TimeUnit.HOURS);
     }
+
 
     public BidDTO getTopBidForKafka(Long auctionId) {
         String key = "auction:" + auctionId + ":leaderboard";

@@ -1,9 +1,11 @@
 package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.dto.AuctionResultDTO;
+import com.example.movie_booking_system.dto.PendingAuctionDTO;
 import com.example.movie_booking_system.dto.createAuctionDTO;
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.AuctionStatus;
+import com.example.movie_booking_system.models.AuctionWinner;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.BidsRepository;
@@ -16,9 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AuctionService {
@@ -29,8 +34,7 @@ public class AuctionService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private BidsRepository bidsRepository;
+
 
     @Autowired
     private BookingRepository bookingRepository;
@@ -103,4 +107,44 @@ public class AuctionService {
         System.out.println("Auction " + result.getAuctionId() + " marked as completed");
 //        some operations are still left so need to configure that thing first
     }
+
+
+    public List<PendingAuctionDTO> getPendingPayments(Long userId) {
+        List<AuctionWinner> auctionWinners = auctionRepository.findPendingPaymentsByUserId(userId);
+        return auctionWinners.stream()
+                .map(auctionWinner -> {
+                    Auction auction = auctionWinner.getAuctionID();
+                    PendingAuctionDTO dto = new PendingAuctionDTO();
+
+                    dto.setId(auction.getId());
+                    dto.setStatus("pending");
+                    dto.setBidAmount(auctionWinner.getAmount());
+                    dto.setMovieTitle(auction.getBookingId().getMovie().getTitle());
+                    dto.setTime(auction.getBookingId().getShowtime().getTime());
+                    dto.setSeats(auction.getBookingId().getSeatIds());
+                    dto.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
+                    dto.setOriginalPrice(auction.getMin_Amount());
+                    dto.setSeller(auction.getSeller().getName());
+
+                    LocalDateTime now = LocalDateTime.now();
+                    Duration timeLeft = Duration.between(now, auction.getEndsAt());
+                    dto.setExpiresIn(String.format("%02d:%02d", timeLeft.toMinutes(), timeLeft.toSecondsPart()));
+                    dto.setTimeLeft(getTimeLeftStatus(timeLeft));
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private String getTimeLeftStatus(Duration timeLeft) {
+        long minutesLeft = timeLeft.toMinutes();
+        if (minutesLeft > 30) {
+            return "plenty";
+        } else if (minutesLeft > 10) {
+            return "warning";
+        } else {
+            return "critical";
+        }
+    }
+
 }

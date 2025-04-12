@@ -114,6 +114,7 @@ public class BookingService {
         booking.setSeatIds(seatDetails.toString());
         booking.setShowtime(showtime);
         booking.setUser(user);
+        booking.setMovie(movie);
 
         bookingRepository.save(booking);
 
@@ -143,14 +144,24 @@ public class BookingService {
         return true;
     }
 
-    public Booking get_booking_details(Long user_id, Long booking_id) {
+    public BookingResponseDTO get_booking_details(Long user_id, Long booking_id) {
 
         Booking booking = bookingRepository.findById(booking_id).orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));//custom exception handling
         if (!Objects.equals(booking.getUser().getId(), user_id)) {
             throw new RuntimeException("User is not authorized to cancel this booking.");
         }
 
-        return booking;
+//        isko booking responseDTO mai convert karo chup chap
+        BookingResponseDTO bookingResponseDTO = new BookingResponseDTO();
+        bookingResponseDTO.setBookingId(booking.getId());
+        bookingResponseDTO.setMovieName(booking.getMovie().getTitle());
+        bookingResponseDTO.setTheatreName(booking.getShowtime().getTheatre().getName());
+        bookingResponseDTO.setSeats(booking.getSeatIds());
+        bookingResponseDTO.setShowtime(booking.getShowtime().getTime());
+        bookingResponseDTO.setMovieImage(booking.getMovie().getImage());
+
+
+        return bookingResponseDTO;
 
     }
 
@@ -285,7 +296,9 @@ public class BookingService {
                 booking.getId(),
                 booking.getShowtime().getTheatre().getName(),
                 booking.getSeatIds(),
-                booking.getShowtime().getTime());
+                booking.getShowtime().getTime(),
+                booking.getMovie().getTitle(),
+                booking.getMovie().getImage());
     }
 
     }

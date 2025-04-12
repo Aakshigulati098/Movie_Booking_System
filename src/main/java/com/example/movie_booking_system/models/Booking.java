@@ -22,6 +22,28 @@ public class Booking {
     @JoinColumn(name = "showtimeId", referencedColumnName = "id")
     private ShowTime showtime;
 
+    @OneToOne
+    @JoinColumn(name="movie_id", referencedColumnName = "id")
+    private Movie movie;
+
+    public Movie getMovie() {
+        return movie;
+    }
+
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
+
+
+
+    public boolean isReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(boolean reminderSent) {
+        this.reminderSent = reminderSent;
+    }
+
     private Long amount;
 
     private LocalDateTime booking_date;
