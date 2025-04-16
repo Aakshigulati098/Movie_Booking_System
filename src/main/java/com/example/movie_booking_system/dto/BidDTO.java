@@ -1,6 +1,5 @@
 package com.example.movie_booking_system.dto;
 
-import java.time.LocalDateTime;
 
 public class BidDTO {
     private Long auctionId;
@@ -39,4 +38,5 @@ public class BidDTO {
     public void setAmount(Long amount) {
         this.amount = amount;
     }
+
 }

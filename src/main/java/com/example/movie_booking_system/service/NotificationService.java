@@ -141,7 +141,7 @@ public class NotificationService {
             logger.info("No auction found for " + bidder.getAuctionId());
             return;
         }
-        AuctionWinner existingAuction=auctionWinnerRepository.findByAuctionID(auction).orElse(null);
+        AuctionWinner existingAuction=auctionWinnerRepository.findByAuctionID(auction);
 
 
         Users winner=userRepository.findById(bidder.getUserId()).orElse(null);

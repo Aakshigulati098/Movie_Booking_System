@@ -32,8 +32,7 @@ public class ActionResultConsumer {
     private AuctionService auctionService;
     @Autowired
     private RedisService redisService;
-    @Autowired
-    private KafkaTemplate<String, String> stringKafkaTemplate;
+
 
     @Autowired
     @Qualifier("stringKafkaTemplate")
@@ -51,20 +50,20 @@ public class ActionResultConsumer {
             logger.info("so i have persisted the leaderboard in redis for auction ID: " + result.getAuctionId());
             System.out.println("and now i would be producing a message to a new kafka topic which will be consumed by the notification service");
             // Produce a message to the new Kafka topic
-            String key = "auction:" + result.getAuctionId() + ":leaderboard";
+                String key = "auction:" + result.getAuctionId() + ":leaderboard";
 
 
-            CompletableFuture<SendResult<String,String>> future=kafkaTemplate.send(WinnerLeaderboardTopic,key,key);
+                CompletableFuture<SendResult<String,String>> future=kafkaTemplate.send(WinnerLeaderboardTopic,key,key);
 
-            future.whenComplete((sendResult, ex) -> {
-                if (ex != null) {
-                    logger.severe("Error sending message to Kafka for storing leaderboard: " + ex.getMessage());
-                } else {
-                    logger.info("Message sent to Kafka topic: " + sendResult.getRecordMetadata().topic() +
-                            ", partition: " + sendResult.getRecordMetadata().partition() +
-                            ", offset: " + sendResult.getRecordMetadata().offset());
-                }
-            });
+                future.whenComplete((sendResult, ex) -> {
+                    if (ex != null) {
+                        logger.severe("Error sending message to Kafka for storing leaderboard: " + ex.getMessage());
+                    } else {
+                        logger.info("Message sent to Kafka topic: " + sendResult.getRecordMetadata().topic() +
+                                ", partition: " + sendResult.getRecordMetadata().partition() +
+                                ", offset: " + sendResult.getRecordMetadata().offset());
+                    }
+                });
 
 
 

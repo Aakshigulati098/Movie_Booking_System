@@ -2,6 +2,9 @@ package com.example.movie_booking_system.KafkaConsumer;
 
 
 import com.example.movie_booking_system.dto.BidDTO;
+import com.example.movie_booking_system.models.Auction;
+import com.example.movie_booking_system.models.AuctionStatus;
+import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.UserRepository;
 import com.example.movie_booking_system.service.NotificationService;
 import com.example.movie_booking_system.service.RedisService;
@@ -29,6 +32,9 @@ public class WinnerNotifyConsumer {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuctionRepository auctionRepository;
+
 
 
 
@@ -51,6 +57,13 @@ public class WinnerNotifyConsumer {
             System.out.println("no top bidder found");
             logger.info("no top bidder found so need to handle this flow in a different manner ");
 //            here i need to mark the db status to unsold and then do further operations
+            Auction auction=auctionRepository.findById(auctionId).orElse(null);
+            if(auction==null) {
+                logger.info("auction not found in the db for auction ID: "+auctionId);
+                return;
+            }
+            auction.setStatus(AuctionStatus.UNSOLD);
+            logger.info("auction status has been set to unsold for auction ID: "+auctionId);
 //            like cleanup and everything and then actually get the best code possible in terms
 //            of flow and the frontend that i am very much sceptical about
             return;
@@ -58,6 +71,9 @@ public class WinnerNotifyConsumer {
         logger.info("i have got the top bidder from redis for auction ID: "+topBidder.getAuctionId());
 //        usi bande ko redis ke leaderboard se hatao that thing you need to do keeping in mind the edge cases of
 //        handling the nullable
+//        pehle redis se hatao uske bad bat karte hai !
+        redisService.deleteBidderFromLeaderboard(topBidder);
+        logger.info("i have removed the top bidder from redis leaderboard for auction ID: "+topBidder.getAuctionId());
 //        and then usi bande ko notify karo
         notificationService.sendNotification(topBidder);
         logger.info("Top bidder has been sent notification to process the acceptance of the auction "+userRepository.findById(topBidder.getUserId()).get().getName());

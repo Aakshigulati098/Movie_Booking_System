@@ -1,20 +1,21 @@
 package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 public class AuctionWinner {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name="auctionID", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Auction auctionID;
 
-
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name="winnerId", referencedColumnName = "id")
     private Users winnerId;
 

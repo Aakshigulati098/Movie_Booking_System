@@ -22,4 +22,16 @@ public class WebSocketController {
     public String updateAuction() { // agar zyada need ho toh just use a DTO here
         return "User has been notified for post auction updates !!!";
     }
+
+    @MessageMapping("/booking-transfer")
+    @SendTo("/topic/booking-transfer")
+    public String updateBooking() { // agar zyada need ho toh just use a DTO here
+        return "Booking has been modified due to a auction !!!";
+    }
+
+    @MessageMapping("/auction-Accept-updates")
+    @SendTo("/topic/auction-Accept-updates")
+    public String updateAuctionAcceptance() { // agar zyada need ho toh just use a DTO here
+        return "Auction has been accepted !!!";
+    }
 }

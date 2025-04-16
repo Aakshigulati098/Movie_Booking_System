@@ -233,14 +233,40 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
     public ResponseEntity<?> getPendingPayments(@PathVariable Long userId) {
         try {
             List<PendingAuctionDTO> pendingPayments = auctionService.getPendingPayments(userId);
-            if (!pendingPayments.isEmpty()) {
-                return ResponseEntity.ok(pendingPayments);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
+            // Always return 200 OK with the list (even if empty)
+            return ResponseEntity.ok(pendingPayments);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching pending payments: " + e.getMessage());
         }
     }
+    @PutMapping("/AuctionWinRejectResponse/{userId}/{auctionId}")
+    public ResponseEntity<?> handleAuctionWinRejectResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+        try {
+            auctionService.handleRejection(auctionId);
+            return ResponseEntity.ok("Response recorded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error handling auction win response: " + e.getMessage());
+        }
+    }
+
+//    handle action win Accept Response
+//    Ab bande ne accept kar liya toh usko mast se payment ke liye bolo
+//    and jab payment ho jayega auction status ko update karo and then
+//    booking transfer karo and ak aur websocket connection broadcast karo
+//    which will be handled by the booking service and the booking page in frontend
+//    whose sole purpose is to trigger the fetching of booking details again once they get any message to this channel
+
+    @PutMapping("/AuctionWinAcceptResponse/{userId}/{auctionId}")
+    public ResponseEntity<?> handleAuctionWinAcceptResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+        try {
+            auctionService.handleAcceptance(auctionId,userId);
+            return ResponseEntity.ok("Response recorded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error handling auction win response: " + e.getMessage());
+        }
+    }
+
 }

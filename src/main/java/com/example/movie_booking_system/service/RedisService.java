@@ -231,8 +231,22 @@ public class RedisService {
 
 
     public void deleteBidderFromLeaderboard(BidDTO bidDTO) {
-        String key="auction:"+bidDTO.getAuctionId()+":leaderboard";
-        // Remove the user's bid from the leaderboard
-        redisTemplate.opsForZSet().remove(key, bidDTO.getUserId());
+        String key = "auction:" + bidDTO.getAuctionId() + ":leaderboard";
+
+        // Get all entries from leaderboard
+        Set<Object> entries = redisTemplate.opsForZSet().range(key, 0, -1);
+
+        if (entries != null) {
+            // Find and remove the matching bid
+            entries.stream()
+                    .filter(entry -> entry instanceof BidResponseDTO)
+                    .map(entry -> (BidResponseDTO) entry)
+                    .filter(bid -> bid.getBidderId().equals(bidDTO.getUserId()))
+                    .forEach(bid -> redisTemplate.opsForZSet().remove(key, bid));
+        }
+
+        // Also remove from user's bid cache if exists
+        String userKey = "auction:" + bidDTO.getAuctionId() + ":user:" + bidDTO.getUserId();
+        redisTemplate.delete(userKey);
     }
 }
