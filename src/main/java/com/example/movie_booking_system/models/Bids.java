@@ -1,13 +1,13 @@
 package com.example.movie_booking_system.models;
 
-
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
 @Entity
 public class Bids {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -17,13 +17,13 @@ public class Bids {
     private Users userId;
 
     @ManyToOne
-    @JoinColumn(name="auctionId",referencedColumnName = "id")
+    @JoinColumn(name="auctionId", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Auction auctionId;
 
     private Long BidAmount;
 
     private LocalDateTime createdAt;
-
 
     public Long getId() {
         return id;

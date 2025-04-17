@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Entity
 @Table(name = "booking")
 public class Booking {
@@ -22,6 +21,10 @@ public class Booking {
     @JoinColumn(name = "showtimeId", referencedColumnName = "id")
     private ShowTime showtime;
 
+    @ManyToOne
+    @JoinColumn(name="movie_id", referencedColumnName = "id")
+    private Movie movie;
+
     private Long amount;
 
     private LocalDateTime booking_date;
@@ -31,7 +34,6 @@ public class Booking {
     private boolean reminderSent = false;
 
     public Booking() {
-
     }
 
     public Long getId() {
@@ -58,6 +60,14 @@ public class Booking {
         this.showtime = showtime;
     }
 
+    public Movie getMovie() {
+        return movie;
+    }
+
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
+
     public Long getAmount() {
         return amount;
     }
@@ -80,6 +90,14 @@ public class Booking {
 
     public void setSeatIds(String seatIds) {
         this.seatIds = seatIds;
+    }
+
+    public boolean isReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(boolean reminderSent) {
+        this.reminderSent = reminderSent;
     }
 
     public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, String seat) {

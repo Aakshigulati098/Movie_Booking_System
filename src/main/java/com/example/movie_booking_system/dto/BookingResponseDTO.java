@@ -5,6 +5,25 @@ import java.time.LocalDateTime;
 public class BookingResponseDTO {
     private Long bookingId;
 
+    private String movieName;
+    private String movieImage;
+
+    public String getMovieImage() {
+        return movieImage;
+    }
+
+    public void setMovieImage(String movieImage) {
+        this.movieImage = movieImage;
+    }
+
+    public String getMovieName() {
+        return movieName;
+    }
+
+    public void setMovieName(String movieName) {
+        this.movieName = movieName;
+    }
+
     private String theatreName;
     private String seats;
 //    private double totalPrice;
@@ -13,8 +32,10 @@ public class BookingResponseDTO {
     // Constructors
     public BookingResponseDTO() {}
 
-    public BookingResponseDTO(Long bookingId,  String theatreName, String seats,  String showtime) {
+    public BookingResponseDTO(Long bookingId,  String theatreName, String seats,  String showtime, String movieName, String movieImage) {
         this.bookingId = bookingId;
+        this.movieName = movieName;
+        this.movieImage = movieImage;
 
         this.theatreName = theatreName;
         this.seats = seats;

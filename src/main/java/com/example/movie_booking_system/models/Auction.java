@@ -1,7 +1,8 @@
 package com.example.movie_booking_system.models;
 
-
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -12,11 +13,22 @@ public class Auction {
     @GeneratedValue(strategy= GenerationType.SEQUENCE)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name="bookingId", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Booking bookingId;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    private Long FinalAmount;
+
+    public Long getFinalAmount() {
+        return FinalAmount;
+    }
+
+    public void setFinalAmount(Long finalAmount) {
+        FinalAmount = finalAmount;
+    }
+
+    @ManyToOne
     @JoinColumn(name="sellerId", referencedColumnName = "id")
     private Users Seller;
 
@@ -29,7 +41,6 @@ public class Auction {
     private AuctionStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime endsAt;
-
 
     public Auction() {
     }
@@ -98,9 +109,9 @@ public class Auction {
         this.createdAt = createdAt;
     }
 
-
-    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long min_Amount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt) {
+    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long min_Amount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt, Long FinalAmount) {
         this.id = id;
+        this.FinalAmount = FinalAmount;
         this.bookingId = bookingId;
         Seller = seller;
         Winner = winner;

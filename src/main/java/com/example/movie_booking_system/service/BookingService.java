@@ -1,5 +1,6 @@
 package com.example.movie_booking_system.service;
 
+import com.example.movie_booking_system.KafkaConsumer.ActionResultConsumer;
 import com.example.movie_booking_system.dto.BookingResponseDTO;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
@@ -15,11 +16,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
 
+    private static final Logger logger = Logger.getLogger(BookingService.class.getName());
+
+
+    @Autowired
+    private AuctionWinnerRepository auctionWinnerRepository;
     @Autowired
     private BookingRepository bookingRepository;
     @Autowired
@@ -30,6 +37,8 @@ public class BookingService {
 
     @Autowired
     EmailSenderService emailSenderService;
+    @Autowired
+    private AuctionRepository auctionRepository;
 
     @Autowired
     private SeatsRepository seatsRepository;
@@ -42,6 +51,8 @@ public class BookingService {
 
     @Autowired
     private ShowTimeRepository showTimeRepository;
+    @Autowired
+    private WebSocketService webSocketService;
 
 //    @Autowired
 //    private PaymentService paymentService; // Inject Payment Service
@@ -114,6 +125,7 @@ public class BookingService {
         booking.setSeatIds(seatDetails.toString());
         booking.setShowtime(showtime);
         booking.setUser(user);
+        booking.setMovie(movie);
 
         bookingRepository.save(booking);
 
@@ -143,14 +155,24 @@ public class BookingService {
         return true;
     }
 
-    public Booking get_booking_details(Long user_id, Long booking_id) {
+    public BookingResponseDTO get_booking_details(Long user_id, Long booking_id) {
 
         Booking booking = bookingRepository.findById(booking_id).orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));//custom exception handling
         if (!Objects.equals(booking.getUser().getId(), user_id)) {
             throw new RuntimeException("User is not authorized to cancel this booking.");
         }
 
-        return booking;
+//        isko booking responseDTO mai convert karo chup chap
+        BookingResponseDTO bookingResponseDTO = new BookingResponseDTO();
+        bookingResponseDTO.setBookingId(booking.getId());
+        bookingResponseDTO.setMovieName(booking.getMovie().getTitle());
+        bookingResponseDTO.setTheatreName(booking.getShowtime().getTheatre().getName());
+        bookingResponseDTO.setSeats(booking.getSeatIds());
+        bookingResponseDTO.setShowtime(booking.getShowtime().getTime());
+        bookingResponseDTO.setMovieImage(booking.getMovie().getImage());
+
+
+        return bookingResponseDTO;
 
     }
 
@@ -285,7 +307,27 @@ public class BookingService {
                 booking.getId(),
                 booking.getShowtime().getTheatre().getName(),
                 booking.getSeatIds(),
-                booking.getShowtime().getTime());
+                booking.getShowtime().getTime(),
+                booking.getMovie().getTitle(),
+                booking.getMovie().getImage());
     }
 
+    public void TransferBooking(Long id, Long userId, Long finalAmount) {
+
+        logger.info("hey i am in transfer booking method");
+
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + id));
+        // Update the booking details
+
+        booking.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId)));
+        booking.setAmount(finalAmount);
+        bookingRepository.save(booking);
+        logger.info("Booking transferred successfully to user with ID: " + userId);
+//        abhi websocket topic broadcast karna hai jo ki frontend pe bhi reflect hoga
+        webSocketService.sendBookingTransferNotification(id);
+        logger.info("WebSocket notification sent for booking transfer with ID: " + id);
+
+
     }
+}

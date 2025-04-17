@@ -3,7 +3,7 @@ package com.example.movie_booking_system.dto;
 import java.time.LocalDateTime;
 
 public class BidResponseDTO {
-    private String id;
+    private Long bidderId;
     private String auctionId;
     private String bidder;
     private Long amount;
@@ -11,20 +11,20 @@ public class BidResponseDTO {
 
     // Getters and Setters
     public BidResponseDTO() {}
-    public BidResponseDTO(String id, String auctionId, String bidder, Long amount, LocalDateTime timestamp) {
-        this.id = id;
+    public BidResponseDTO(Long id, String auctionId, String bidder, Long amount, LocalDateTime timestamp) {
+        this.bidderId = id;
         this.auctionId = auctionId;
         this.bidder = bidder;
         this.amount = amount;
         this.timestamp = timestamp;
     }
 
-    public String getId() {
-        return id;
+    public Long getBidderId() {
+        return bidderId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setBidderId(Long bidderId) {
+        this.bidderId = bidderId;
     }
 
     public String getAuctionId() {

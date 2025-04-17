@@ -1,10 +1,7 @@
 package com.example.movie_booking_system.controller;
 
 
-import com.example.movie_booking_system.dto.AuctionResponseDTO;
-import com.example.movie_booking_system.dto.BidDTO;
-import com.example.movie_booking_system.dto.BidResponseDTO;
-import com.example.movie_booking_system.dto.createAuctionDTO;
+import com.example.movie_booking_system.dto.*;
 
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.Users;
@@ -127,14 +124,14 @@ public class AuctionController {
             // Create ResponseDTO
             AuctionResponseDTO response = new AuctionResponseDTO();
             System.out.println("response here is : " + response);
-            response.setId(auction.getId());
+
 //        Booking booking = bookingRepository.findById(auction.getBookingId());
 
 //bhai movie ke liye to entity mai changes karne hi padenge and we have got no other option
 //        response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
+            response.setId(auction.getId());
             response.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
-
-            response.setShowtime(auction.getBookingId().getShowtime().toString());
+            response.setShowtime(auction.getBookingId().getShowtime().getTime());
             response.setSeat(auction.getBookingId().getSeatIds());
             response.setSellerName(auction.getSeller().getName());
             response.setBasePrice(auction.getMin_Amount());
@@ -161,6 +158,8 @@ public class AuctionController {
 //        response.setImageUrl(auction.getBookingId().getMovie().getImageUrl());
 //        response.setDescription(auction.getBookingId().getMovie().getDescription());
             response.setBids(new ArrayList<>(bids));
+            response.setImageUrl(auction.getBookingId().getMovie().getImage());
+            response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
 
             return response;
         }).collect(Collectors.toList());
@@ -203,7 +202,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
     AuctionResponseDTO response = new AuctionResponseDTO();
     response.setId(auction.getId());
     response.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
-    response.setShowtime(auction.getBookingId().getShowtime().toString());
+    response.setShowtime(auction.getBookingId().getShowtime().getTime());
     response.setSeat(auction.getBookingId().getSeatIds());
     response.setSellerName(auction.getSeller().getName());
     response.setBasePrice(auction.getMin_Amount());
@@ -225,7 +224,49 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
 
     response.setEndTime(auction.getEndsAt());
     response.setBids(new ArrayList<>(bids));
+    response.setImageUrl(auction.getBookingId().getMovie().getImage());
+    response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
 
     return ResponseEntity.ok(response);
 }
+    @GetMapping("/pending-payment/{userId}")
+    public ResponseEntity<?> getPendingPayments(@PathVariable Long userId) {
+        try {
+            List<PendingAuctionDTO> pendingPayments = auctionService.getPendingPayments(userId);
+            // Always return 200 OK with the list (even if empty)
+            return ResponseEntity.ok(pendingPayments);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching pending payments: " + e.getMessage());
+        }
+    }
+    @PutMapping("/AuctionWinRejectResponse/{userId}/{auctionId}")
+    public ResponseEntity<?> handleAuctionWinRejectResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+        try {
+            auctionService.handleRejection(auctionId);
+            return ResponseEntity.ok("Response recorded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error handling auction win response: " + e.getMessage());
+        }
+    }
+
+//    handle action win Accept Response
+//    Ab bande ne accept kar liya toh usko mast se payment ke liye bolo
+//    and jab payment ho jayega auction status ko update karo and then
+//    booking transfer karo and ak aur websocket connection broadcast karo
+//    which will be handled by the booking service and the booking page in frontend
+//    whose sole purpose is to trigger the fetching of booking details again once they get any message to this channel
+
+    @PutMapping("/AuctionWinAcceptResponse/{userId}/{auctionId}")
+    public ResponseEntity<?> handleAuctionWinAcceptResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+        try {
+            auctionService.handleAcceptance(auctionId,userId);
+            return ResponseEntity.ok("Response recorded successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error handling auction win response: " + e.getMessage());
+        }
+    }
+
 }
