@@ -96,4 +96,12 @@ public List<MovieDTO> getAllMovies() {
                 .distinct()
                 .collect(Collectors.toList());
     }
+
+    public List<MovieDTO> getMoviesByGenre(String genre) {
+        List<Movie> movies = movieRepository.findByGenreContainingIgnoreCase(genre);
+        if (movies.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No movies found for the genre: " + genre);
+        }
+        return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
 }

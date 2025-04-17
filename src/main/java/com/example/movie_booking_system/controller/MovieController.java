@@ -77,4 +77,13 @@ public class MovieController {
         List<String> categories = movieService.getUniqueCategories();
         return new ResponseEntity<>(categories, HttpStatus.OK);
     }
+
+    @GetMapping("/moviesByGenre/{genre}")
+    public ResponseEntity<Object> getMoviesByGenre(@PathVariable("genre") String genre) {
+        try {
+            return new ResponseEntity<>(movieService.getMoviesByGenre(genre), HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
+        }
+    }
 }
