@@ -2,7 +2,7 @@ package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.dto.UserDTO;
 import com.example.movie_booking_system.models.Users;
-import com.example.movie_booking_system.repository.UserRepository;;
+import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 

@@ -64,7 +64,7 @@ public class AuctionController {
         try{
 
             System.out.println("hey i got called in auction ");
-            System.out.println(Incomingauction);
+            System.out.println(Incomingauction.getUserId());
 //            return ResponseEntity.ok("Auction created successfully with ID: " + Incomingauction.getBookingId());
 
 

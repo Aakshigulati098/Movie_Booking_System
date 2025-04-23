@@ -2,6 +2,15 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id "org.sonarqube" version "4.4.1.3373"
+}
+sonar {
+	properties {
+		property 'sonar.projectKey', 'wissen-entertainments'
+		property 'sonar.projectName', 'wissen-entertainments'
+		property 'sonar.host.url', 'http://localhost:9000'
+		property 'sonar.token', 'sqp_b4d9040038c0b45de831f12c3af113454e714688'
+	}
 }
 
 group = 'com.example'

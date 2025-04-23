@@ -127,7 +127,7 @@ public class NotificationService {
 
 //        pehle db wala implement karo because that will apply some backend part
 //        as email wale mai bss ak link inject karke bhejna hai thats it
-
+        logger.info("idhar ho rha hai ");
         logger.info("Sending notification from the notification service to " + bidder.getUserId() + ": " + bidder.getAmount());
 //        agar mujhe notification bhejna hai toh mujhe ye cheezein karni padengi
 //        1. Email
@@ -141,7 +141,11 @@ public class NotificationService {
             logger.info("No auction found for " + bidder.getAuctionId());
             return;
         }
-        AuctionWinner existingAuction=auctionWinnerRepository.findByAuctionID(auction);
+        Optional<AuctionWinner> existingAuction=auctionWinnerRepository.findByAuctionID(auction);
+        if(existingAuction.isEmpty()) {
+            logger.info("No auction winner found for " + bidder.getAuctionId());
+//            return;
+        }
 
 
         Users winner=userRepository.findById(bidder.getUserId()).orElse(null);
@@ -150,7 +154,8 @@ public class NotificationService {
             return;
         }
 
-        auctionAsyncService.saveWinnerAndBroadcast(bidder, auction, winner, existingAuction);
+        auctionAsyncService.saveWinnerAndBroadcast(bidder, auction, winner,
+                existingAuction.orElse(null));
         logger.info("Auction updated for " + bidder.getUserId() +" and websocket notification sent");
 //        now need to handle accept and reject thing which is not our headache this will be solved by a diff api
 

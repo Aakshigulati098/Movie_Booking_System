@@ -86,6 +86,7 @@ public class AuctionService {
 
             // Save the auction to the database
             Auction savedAuction = auctionRepository.save(auction);
+            logger.info("Auction created with ID: " + savedAuction.getId());
 
             // Store auction metadata in Redis
             redisService.saveAuctionMetadata(savedAuction.getId(), "ACTIVE", savedAuction.getEndsAt());
@@ -225,9 +226,11 @@ public class AuctionService {
             logger.severe("Error in handleRejection for auction " + auctionId + ": " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to process auction rejection");
+        }finally {
+            logger.info("Rejection processing completed for auction ID: " + auctionId);
         }
 
-        logger.info("Rejection processing completed for auction ID: " + auctionId);
+
     }
 
     @Transactional
