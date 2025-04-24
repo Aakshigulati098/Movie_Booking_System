@@ -2,7 +2,7 @@ package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.dto.BookingMovieDTO;
 import com.example.movie_booking_system.dto.BookingResponseDTO;
-import com.example.movie_booking_system.models.Booking;
+
 import com.example.movie_booking_system.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,12 +10,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 
 @CrossOrigin(origins = "http://localhost:5174")
 @RestController
 
 public class BookingController {
+
+    private static final java.util.logging.Logger bookingLogger = Logger.getLogger(BookingController.class.getName());
     @Autowired
     private BookingService bookingService;
 
@@ -23,30 +26,18 @@ public class BookingController {
     public String getting(){
         return "hey i am here";
     }
-//    i feel like here i should be having seat number and with the showtime_id and seat_number i should be getting the seat_id
+
 
     @PostMapping("/bookingMovie/{user_id}/{movieId}")
-    public ResponseEntity<Object> booking_Movie(@PathVariable("user_id") Long user_id,@PathVariable("movieId")Long movie_id, @RequestBody BookingMovieDTO bookingMovieDTO) {
+    public ResponseEntity<Object> bookingMovie(@PathVariable("user_id") Long userId,@PathVariable("movieId")Long movieId, @RequestBody BookingMovieDTO bookingMovieDTO) {
         try {
-            System.out.println("hey i got called in booking ");
+            bookingLogger.info("hey i got called in booking ");
             List<Long> seatIds = bookingMovieDTO.getSeatIds();
-            System.out.println(seatIds);
-//            for all the seats booking
-//            for (Long seatId : seatIds) {
-               return new ResponseEntity<>(bookingService.booking_Movie(user_id, seatIds,movie_id),HttpStatus.OK);
-//            }
-//            ab tak sare false ho chuke hai
-//            ab details ke sath mail bhejo and then call it off for the api
-//            pehle details lo kya kya bhejna hai .. and then request body mai dalo ..and then usko uss template pe dalo
-//            and then bss service layer se uss function ko call karo
-//            details kya kya chahiye ?
-//            user details
-//                    name,email,phone
-//            booking details
-//            film , theatre , showtime , seats , price
-//            call the service here
 
-//            return new ResponseEntity<>(bookingService.SuccessfulEmailsending(user_id, movie_id, seatIds), HttpStatus.OK);
+
+               return new ResponseEntity<>(bookingService.booking_Movie(userId, seatIds,movieId),HttpStatus.OK);
+
+
 
         }
             catch (Exception e) {

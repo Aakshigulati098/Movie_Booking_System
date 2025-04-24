@@ -1,10 +1,10 @@
 package com.example.movie_booking_system.config;
 
-import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnection;
+
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
@@ -60,17 +60,7 @@ public class RedisConfig {
         return container;
     }
 
-//    @PostConstruct
-//    public void configureRedisKeyspaceNotifications() {
-//        RedisConnection connection = redisConnectionFactory().getConnection();
-//        try {
-//            // Enable notifications for expired keys (Ex)
-//            connection.serverCommands().setConfig("notify-keyspace-events", "Ex");
-//            System.out.println("Redis configured to send expired key notifications");
-//        } finally {
-//            connection.close();
-//        }
-//    }
+
 
 
 }

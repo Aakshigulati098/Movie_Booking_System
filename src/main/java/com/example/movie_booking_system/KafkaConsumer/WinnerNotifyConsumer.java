@@ -68,15 +68,15 @@ public class WinnerNotifyConsumer {
 //            of flow and the frontend that i am very much sceptical about
             return;
         }
-        logger.info("i have got the top bidder from redis for auction ID: "+topBidder.getAuctionId());
+        logger.info("i have got the top bidder from redis for auction ID: "+topBidder.getUserId());
 //        usi bande ko redis ke leaderboard se hatao that thing you need to do keeping in mind the edge cases of
 //        handling the nullable
 //        pehle redis se hatao uske bad bat karte hai !
         redisService.deleteBidderFromLeaderboard(topBidder);
-        logger.info("i have removed the top bidder from redis leaderboard for auction ID: "+topBidder.getAuctionId());
+
 //        and then usi bande ko notify karo
         notificationService.sendNotification(topBidder);
-        logger.info("Top bidder has been sent notification to process the acceptance of the auction "+userRepository.findById(topBidder.getUserId()).get().getName());
+
     }
 
     private Long extractAuctionId(String key) {

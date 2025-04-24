@@ -230,23 +230,45 @@ public class RedisService {
     }
 
 
+
     public void deleteBidderFromLeaderboard(BidDTO bidDTO) {
         String key = "auction:" + bidDTO.getAuctionId() + ":leaderboard";
+        logger.info("Starting removal of bidder {} from auction {} leaderboard"+ bidDTO.getUserId()+ bidDTO.getAuctionId());
 
-        // Get all entries from leaderboard
+        // Log current leaderboard state
         Set<Object> entries = redisTemplate.opsForZSet().range(key, 0, -1);
+        logger.info("Current leaderboard entries for auction {}: {}"+ bidDTO.getAuctionId()+entries);
 
         if (entries != null) {
-            // Find and remove the matching bid
-            entries.stream()
+            long entriesRemoved = entries.stream()
                     .filter(entry -> entry instanceof BidResponseDTO)
                     .map(entry -> (BidResponseDTO) entry)
-                    .filter(bid -> bid.getBidderId().equals(bidDTO.getUserId()))
-                    .forEach(bid -> redisTemplate.opsForZSet().remove(key, bid));
+                    .filter(bid -> {
+                        boolean matches = bid.getBidderId().equals(bidDTO.getUserId());
+                        if (matches) {
+                            logger.info("Found matching bid for user {} with amount {}"+
+                                    bid.getBidderId()+ bid.getAmount());
+                        }
+                        return matches;
+                    })
+                    .map(bid -> {
+                        redisTemplate.opsForZSet().remove(key, bid);
+                        logger.info("Removed bid from leaderboard for user {}"+ bid.getBidderId());
+                        return bid;
+                    })
+                    .count();
+
+            logger.info("Removed {} entries from leaderboard for user {}"+ entriesRemoved+ bidDTO.getUserId());
         }
 
-        // Also remove from user's bid cache if exists
+        // Remove from user's bid cache
         String userKey = "auction:" + bidDTO.getAuctionId() + ":user:" + bidDTO.getUserId();
-        redisTemplate.delete(userKey);
+        Boolean deleted = redisTemplate.delete(userKey);
+//        logger.info("User bid cache deletion for key {}: {}"+ userKey+ deleted ? "successful" : "not found");
+
+        // Log final leaderboard state
+        Set<Object> finalEntries = redisTemplate.opsForZSet().range(key, 0, -1);
+        logger.info("Final leaderboard entries for auction {}: {}"+ bidDTO.getAuctionId()+ finalEntries);
     }
+
 }

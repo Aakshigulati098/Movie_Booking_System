@@ -9,11 +9,7 @@ public class BidDTO {
     public BidDTO() {}
 
 
-    public BidDTO(Long auctionId, Long userId, Long amount) {
-        this.auctionId = auctionId;
-        this.userId = userId;
-        this.amount = amount;
-    }
+
 
     public Long getAuctionId() {
         return auctionId;

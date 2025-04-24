@@ -1,11 +1,12 @@
 package com.example.movie_booking_system.controller;
 
 
+
 import com.example.movie_booking_system.dto.*;
 
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.Users;
-import com.example.movie_booking_system.repository.BookingRepository;
+
 import com.example.movie_booking_system.repository.UserRepository;
 import com.example.movie_booking_system.service.AuctionService;
 import com.example.movie_booking_system.service.BidHandlerService;
@@ -18,7 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.logging.Logger;
+
 
 @RestController
 @RequestMapping("/auction")
@@ -37,15 +39,17 @@ public class AuctionController {
     private UserRepository userRepository;
 
 
-    @Autowired
-    private BookingRepository bookingRepository;
+
+
+
+    private static final java.util.logging.Logger logger = Logger.getLogger(AuctionController.class.getName());
+
+
 
     @GetMapping("/helloo")
     public String hello(){
         return "hello i am from auction ";
     }
-
-//    here i need to define redis also i think because at a point i need to store the auction data in redis
 
     @GetMapping("/active")
     public ResponseEntity<Map<Long, Map<String, String>>> getAllActiveAuctions() {
@@ -54,21 +58,17 @@ public class AuctionController {
     }
 
     @PostMapping("/createAuction")
-    public ResponseEntity<?> createAuction(@RequestBody createAuctionDTO Incomingauction){
+    public ResponseEntity<?> createAuction(@RequestBody CreateAuctionDTO incomingAuction){
 
-//        i should be creating a auction service function
-//            which will internally call a function to check for validity
-//        and if it is valid it will be creating the new entry in the Auction table
-//            for that i guess we will be in need of a few things
-//                bookingId,userId,minimumAmount,
+
         try{
 
-            System.out.println("hey i got called in auction ");
-            System.out.println(Incomingauction);
-//            return ResponseEntity.ok("Auction created successfully with ID: " + Incomingauction.getBookingId());
+            logger.info("hey i got called in auction ");
+            logger.info(incomingAuction.getUserId().toString());
 
 
-            Long auctionId = auctionService.createAuction(Incomingauction);
+
+            Long auctionId = auctionService.createAuction(incomingAuction);
             return ResponseEntity.ok("Auction created successfully with ID: " + auctionId);
 
         }catch(Exception e){
@@ -162,30 +162,12 @@ public class AuctionController {
             response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
 
             return response;
-        }).collect(Collectors.toList());
-        System.out.println("response list: " + responseList);
+        }).toList();
+        logger.info("response list: " + responseList);
 
         return ResponseEntity.ok(responseList);
     }
-//    one api point would be to validate and create the auction data
-            //this would be to validate the auction creation eligibility
-//          //if not eligible return error
-            //if eligible call a service that will create an entry and return the auction id
-//          //and then return the auction id to the user
-//    another would be to handle the bids
-            //this function sole work is to validate the bid
-            //if the bid is valid then it will call a service that will update the auction data both in redis and the database
-            //and then broadcast that there is  a change  to all the users using websockets
-//    another would be to get the auction data from redis
-        //this sole use case is to get the auction id and return the leaderboard for that auction id
 
-//    another would be to handle the auction end and notify the winner
-    //    this would include the use case of kafka consumer so will look into it later
-//    and also i guess the validation of timer should be done both in the frontend and the backend seperately
-
-//    for the frontend i guess we can use react and chatgpt can help us with that
-//    for te backend redis has ttl and after it ends we should find out a function and then when it ends
-//    it should automatically call this function which handles the auction end with kafka consumer
 @GetMapping("/auctionDetails/{auctionId}")
 public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long auctionId) {
     // Fetch auction details from the database

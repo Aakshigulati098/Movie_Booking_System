@@ -1,6 +1,6 @@
 package com.example.movie_booking_system.dto;
 
-import java.time.LocalDateTime;
+
 
 public class BookingResponseDTO {
     private Long bookingId;
@@ -26,7 +26,7 @@ public class BookingResponseDTO {
 
     private String theatreName;
     private String seats;
-//    private double totalPrice;
+
     private String showtime;
 
     // Constructors
@@ -39,7 +39,7 @@ public class BookingResponseDTO {
 
         this.theatreName = theatreName;
         this.seats = seats;
-//        this.totalPrice = totalPrice;
+
         this.showtime = showtime;
     }
 

@@ -25,23 +25,33 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
+
+
+
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
+
     private CustomUserDetails customUserDetails;
 
-    @Autowired
+
     private UserService userService;
 
+
+    private JwtProvider jwtProvider;
+
     @Autowired
-    private JwtProvider jwtProvider; // Autowired instance
+    public AuthController( PasswordEncoder passwordEncoder,
+                         CustomUserDetails customUserDetails, UserService userService, JwtProvider jwtProvider) {
+
+        this.passwordEncoder = passwordEncoder;
+        this.customUserDetails = customUserDetails;
+        this.userService = userService;
+        this.jwtProvider = jwtProvider;
+    }
 
     @GetMapping("/validate-token")
-    public ResponseEntity<?> validateToken(HttpServletRequest request) {
+    public ResponseEntity<Object> validateToken(HttpServletRequest request) {
         try {
             // Extract token from Authorization header
             String authHeader = request.getHeader("Authorization");
@@ -88,9 +98,9 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Use the autowired jwtProvider instance to call generateToken
-        String jwt = jwtProvider.generateToken(authentication);
+       return jwtProvider.generateToken(authentication);
 
-        return jwt;
+
     }
 
     private Authentication authenticate(String username, String password) {

@@ -1,8 +1,8 @@
 package com.example.movie_booking_system.config;
 
-import jakarta.servlet.Filter;
+
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,13 +15,14 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
+
 import java.io.IOException;
 import java.security.Key;
-import java.util.Base64;
+
 import java.util.List;
 
 public class JwtTokenValidator extends OncePerRequestFilter {
+
     private final Key key;
 
     public JwtTokenValidator(Key key) {
@@ -50,7 +51,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
                 // Log the specific exception for better debugging
-                System.err.println("JWT Validation Error: " + e.getMessage());
+//
                 throw new BadCredentialsException("Invalid token", e);
             }
         }
