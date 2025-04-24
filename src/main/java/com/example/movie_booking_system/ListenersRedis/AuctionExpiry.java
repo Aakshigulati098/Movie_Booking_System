@@ -1,7 +1,7 @@
 
 package com.example.movie_booking_system.ListenersRedis;
 
-import com.example.movie_booking_system.constants.ConstantData;
+
 import com.example.movie_booking_system.dto.AuctionResultDTO;
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.dto.BidResponseDTO;
