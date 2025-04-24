@@ -81,8 +81,8 @@ public class Auction {
         return min_Amount;
     }
 
-    public void setMin_Amount(Long min_Amount) {
-        this.min_Amount = min_Amount;
+    public void setMin_Amount(Long minAmount) {
+        this.min_Amount = minAmount;
     }
 
     public AuctionStatus getStatus() {
@@ -109,13 +109,13 @@ public class Auction {
         this.createdAt = createdAt;
     }
 
-    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long min_Amount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt, Long FinalAmount) {
+    public Auction(Long id, Booking bookingId, Users seller, Users winner, Long minAmount, AuctionStatus status, LocalDateTime endsAt, LocalDateTime createdAt, Long finalAmount) {
         this.id = id;
-        this.FinalAmount = FinalAmount;
+        this.FinalAmount = finalAmount;
         this.bookingId = bookingId;
         Seller = seller;
         Winner = winner;
-        this.min_Amount = min_Amount;
+        this.min_Amount = minAmount;
         this.status = status;
         this.endsAt = endsAt;
         this.createdAt = createdAt;

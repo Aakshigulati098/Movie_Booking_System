@@ -21,8 +21,13 @@ public class SeatsController {
 
     private static final java.util.logging.Logger seatLogger = Logger.getLogger(SeatsController.class.getName());
 
-    @Autowired
+
     private SeatsService seatsService;
+
+    @Autowired
+    public SeatsController(SeatsService seatsService) {
+        this.seatsService = seatsService;
+    }
 
     @GetMapping("/abir")
     public String getting(){
@@ -43,9 +48,9 @@ public class SeatsController {
 
     // Endpoint to get a specific seat by ID
     @GetMapping("/{seatId}")
-    public ResponseEntity<Object> getSeatById(@PathVariable Long seat_Id) {
+    public ResponseEntity<Object> getSeatById(@PathVariable Long seatId) {
         try {
-            return new ResponseEntity<>(seatsService.getSeatById(seat_Id), HttpStatus.OK);
+            return new ResponseEntity<>(seatsService.getSeatById(seatId), HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -58,8 +63,8 @@ public class SeatsController {
         return seatsService.saveSeat(seat);
     }
     @PatchMapping("/{seatId}/availability")
-    public Seats updateSeatAvailability(@PathVariable Long seatId, @RequestParam Boolean seat_available) {
-        return seatsService.updateSeatAvailability(seatId,seat_available);
+    public Seats updateSeatAvailability(@PathVariable Long seatId, @RequestParam Boolean seatAvailable) {
+        return seatsService.updateSeatAvailability(seatId,seatAvailable);
     }
     @GetMapping("/showtime/{showtimeId}")
     public List<Seats> getSeatsByShowtime(@PathVariable Long showtimeId) {

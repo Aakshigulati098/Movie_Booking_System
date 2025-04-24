@@ -7,8 +7,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class WebSocketService {
 
-    @Autowired
+
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    public WebSocketService(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public void sendWinnerNotification(BidDTO bid) {
         messagingTemplate.convertAndSend("/topic/auction-updates", bid);

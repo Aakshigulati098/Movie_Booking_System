@@ -1,7 +1,7 @@
 package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
-import java.util.List;
+
 
 @Entity
 @Table(name = "movies")  // Explicit table name

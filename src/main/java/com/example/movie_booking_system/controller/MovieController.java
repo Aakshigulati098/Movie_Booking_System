@@ -17,8 +17,12 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class MovieController {
-    @Autowired
+
     private MovieService movieService;
+    @Autowired
+    public MovieController(MovieService movieService) {
+        this.movieService = movieService;
+    }
 
 
     @GetMapping("//")

@@ -19,8 +19,12 @@ import java.util.logging.Logger;
 public class BookingController {
 
     private static final java.util.logging.Logger bookingLogger = Logger.getLogger(BookingController.class.getName());
-    @Autowired
+
     private BookingService bookingService;
+    @Autowired
+    public BookingController(BookingService bookingService) {
+        this.bookingService = bookingService;
+    }
 
     @GetMapping("/helloo")
     public String getting(){
@@ -46,18 +50,18 @@ public class BookingController {
     }
 
     @PutMapping("/cancelBooking/{user_id}/{booking_id}")
-    public ResponseEntity<Object> Cancelling_booking_movie(@PathVariable("user_id") Long user_id, @PathVariable("booking_id") Long booking_id){
+    public ResponseEntity<Object> Cancelling_booking_movie(@PathVariable("user_id") Long userId, @PathVariable("booking_id") Long bookingId){
         try{
-            return new ResponseEntity<Object>(bookingService.Cancelling_booking_movie(user_id,booking_id),HttpStatus.OK);
+            return new ResponseEntity<>(bookingService.Cancelling_booking_movie(userId,bookingId),HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/getBooking/{user_id}/{boking_id}")
-    public ResponseEntity<Object> get_booking_details(@PathVariable("user_id")Long user_id, @PathVariable("boking_id")Long boking_id){
+    public ResponseEntity<Object> get_booking_details(@PathVariable("user_id")Long userId, @PathVariable("boking_id")Long bokingId){
         try{
-            return new ResponseEntity<Object>(bookingService.get_booking_details(user_id,boking_id),HttpStatus.OK);
+            return new ResponseEntity<>(bookingService.get_booking_details(userId,bokingId),HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
