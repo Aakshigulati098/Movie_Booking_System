@@ -47,7 +47,7 @@ public class KafkaConfig {
                 .build();
     }
     @Bean
-    public NewTopic WinnerNotifyTopic() {
+    public NewTopic winnerNotifyTopic() {
         return TopicBuilder.name("auction.winner.notify")
                 .partitions(1)
                 .replicas(1)

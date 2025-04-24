@@ -10,14 +10,10 @@ public class BidResponseDTO {
     private LocalDateTime timestamp;
 
     // Getters and Setters
-    public BidResponseDTO() {}
-    public BidResponseDTO(Long id, String auctionId, String bidder, Long amount, LocalDateTime timestamp) {
-        this.bidderId = id;
-        this.auctionId = auctionId;
-        this.bidder = bidder;
-        this.amount = amount;
-        this.timestamp = timestamp;
+    public BidResponseDTO() {
+//        this is a no args constructor
     }
+
 
     public Long getBidderId() {
         return bidderId;

@@ -6,9 +6,12 @@ import com.example.movie_booking_system.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.logging.Logger;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
+    private static final java.util.logging.Logger userLogger= Logger.getLogger(UserController.class.getName());
 
 //    @Autowired
     private final UserRepository userRepository;
@@ -20,7 +23,7 @@ public class UserController {
     // ✅ GET USER PROFILE
     @GetMapping("/{email}")
     public Users getUser(@PathVariable String email){
-        System.out.println("Email: " + email);
+        userLogger.info("Email: " + email);
         return userRepository.findByEmail(email);
     }
     @GetMapping("/profile")
@@ -32,12 +35,12 @@ public class UserController {
     // ✅ UPDATE USER PROFILE
     @PutMapping("/update")
     public String updateUserProfile(@RequestBody UserDTO updatedUser, Authentication authentication) {
-        System.out.println("Updating user profile: " + updatedUser);
-//        System.out.println("Email: " + updatedUser.getEmail());
-        System.out.println("Name: " + updatedUser.getName());
-        System.out.println("Phone: " + updatedUser.getPhone());
+        userLogger.fine("Updating user profile: " + updatedUser);
+
+        userLogger.info("Name: " + updatedUser.getName());
+        userLogger.info("Phone: " + updatedUser.getPhone());
         String email = authentication.getName();
-//        System.out.println("Authenticated email: " + email);
+
         Users existingUser = userRepository.findByEmail(email);
 
         if (existingUser == null) {
@@ -46,7 +49,7 @@ public class UserController {
 
         existingUser.setName(updatedUser.getName());
         existingUser.setPhone(updatedUser.getPhone());
-//        existingUser.setEmail(updatedUser.getEmail());
+
         userRepository.save(existingUser);
 
         return "Profile updated successfully";

@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 
 public class SeatsController {
+
+    private static final java.util.logging.Logger seatLogger = Logger.getLogger(SeatsController.class.getName());
 
     @Autowired
     private SeatsService seatsService;
@@ -60,7 +63,7 @@ public class SeatsController {
     }
     @GetMapping("/showtime/{showtimeId}")
     public List<Seats> getSeatsByShowtime(@PathVariable Long showtimeId) {
-        System.out.println("hey i got called ");
+        seatLogger.info("hey i got called ");
         return seatsService.getSeatsByShowtime(showtimeId);
     }
 }

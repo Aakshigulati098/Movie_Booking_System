@@ -1,9 +1,8 @@
 package com.example.movie_booking_system.service;
 
-import com.example.movie_booking_system.KafkaConsumer.ActionResultConsumer;
 import com.example.movie_booking_system.dto.AuctionResultDTO;
 import com.example.movie_booking_system.dto.PendingAuctionDTO;
-import com.example.movie_booking_system.dto.createAuctionDTO;
+import com.example.movie_booking_system.dto.CreateAuctionDTO;
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.AuctionStatus;
 import com.example.movie_booking_system.models.AuctionWinner;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -68,7 +66,7 @@ public class AuctionService {
     @Autowired
     private WebSocketService webSocketService;
 
-    public Long createAuction(createAuctionDTO Incomingauction) throws ResponseStatusException {
+    public Long createAuction(CreateAuctionDTO Incomingauction) throws ResponseStatusException {
         // Check if the bookingId is valid to be created as an auction
         boolean isValid = true; // Here I will be calling a function with the bookingId
 
