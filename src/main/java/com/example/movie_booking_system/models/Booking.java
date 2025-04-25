@@ -33,6 +33,16 @@ public class Booking {
 
     private boolean reminderSent = false;
 
+    private BookingEnum bookingStatus;
+
+    public BookingEnum getBookingStatus() {
+        return bookingStatus;
+    }
+
+    public void setBookingStatus(BookingEnum bookingStatus) {
+        this.bookingStatus = bookingStatus;
+    }
+
     public Booking() {
     }
 

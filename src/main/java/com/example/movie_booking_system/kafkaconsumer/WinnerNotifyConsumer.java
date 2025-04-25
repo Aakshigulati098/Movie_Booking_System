@@ -70,9 +70,7 @@ public class WinnerNotifyConsumer {
             return;
         }
         logger.info("i have got the top bidder from redis for auction ID: "+topBidder.getUserId());
-//        usi bande ko redis ke leaderboard se hatao that thing you need to do keeping in mind the edge cases of
-//        handling the nullable
-//        pehle redis se hatao uske bad bat karte hai !
+
         redisService.deleteBidderFromLeaderboard(topBidder);
 
 //        and then usi bande ko notify karo
