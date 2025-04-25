@@ -1,6 +1,7 @@
 package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.emailotp.OtpEmailController;
+import com.example.movie_booking_system.exceptions.UserRegistrationException;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
@@ -32,11 +33,10 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public String signup(Users user){
-
+    public String signup(Users user) {
         Users isUserExist = userRepository.findByEmail(user.getEmail());
-        if(isUserExist!=null){
-            throw new RuntimeException("Email already exist with another account");
+        if (isUserExist != null) {
+            throw new UserRegistrationException("Email already exists with another account");
         }
 
         Users newUser = new Users();
@@ -46,7 +46,7 @@ public class UserService {
         newUser.setPhone(user.getPhone());
         newUser.setAddress(user.getAddress());
 
-        // Implement EMAIl OTP verification
+        // Implement EMAIL OTP verification
         String otp = String.format("%04d", new Random().nextInt(10000));
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
 

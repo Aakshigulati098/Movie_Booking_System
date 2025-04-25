@@ -135,7 +135,7 @@ public class AuctionController {
             response.setShowtime(auction.getBookingId().getShowtime().getTime());
             response.setSeat(auction.getBookingId().getSeatIds());
             response.setSellerName(auction.getSeller().getName());
-            response.setBasePrice(auction.getMin_Amount());
+            response.setBasePrice(auction.getMinAmount());
 //        this i need to figure out
 
             BidDTO topBid = redisService.getTopBid(auctionId);
@@ -150,7 +150,7 @@ public class AuctionController {
                     response.setHighestBidder("Unknown");
                 }
             } else {
-                response.setCurrentBid(auction.getMin_Amount());
+                response.setCurrentBid(auction.getMinAmount());
                 response.setHighestBidder("No bids yet");
             }
 
@@ -187,7 +187,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
     response.setShowtime(auction.getBookingId().getShowtime().getTime());
     response.setSeat(auction.getBookingId().getSeatIds());
     response.setSellerName(auction.getSeller().getName());
-    response.setBasePrice(auction.getMin_Amount());
+    response.setBasePrice(auction.getMinAmount());
 
     BidDTO topBid = redisService.getTopBid(auctionId);
 
@@ -200,7 +200,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
             response.setHighestBidder("Unknown");
         }
     } else {
-        response.setCurrentBid(auction.getMin_Amount());
+        response.setCurrentBid(auction.getMinAmount());
         response.setHighestBidder("No bids yet");
     }
 

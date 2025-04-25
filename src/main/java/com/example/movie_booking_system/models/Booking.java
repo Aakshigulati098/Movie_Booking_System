@@ -76,12 +76,14 @@ public class Booking {
         this.amount = amount;
     }
 
-    public LocalDateTime getBooking_date() {
-        return booking_date;
+
+
+    public void setBookingDate(LocalDateTime bookingDate) {
+        this.booking_date = bookingDate;
     }
 
-    public void setBooking_date(LocalDateTime bookingDate) {
-        this.booking_date = bookingDate;
+    public LocalDateTime getBookingDate() {
+        return booking_date;
     }
 
     public String getSeatIds() {
