@@ -39,7 +39,7 @@ public class BookingController {
             List<Long> seatIds = bookingMovieDTO.getSeatIds();
 
 
-               return new ResponseEntity<>(bookingService.booking_Movie(userId, seatIds,movieId),HttpStatus.OK);
+               return new ResponseEntity<>(bookingService.bookingMovie(userId, seatIds,movieId),HttpStatus.OK);
 
 
 
@@ -50,18 +50,18 @@ public class BookingController {
     }
 
     @PutMapping("/cancelBooking/{user_id}/{booking_id}")
-    public ResponseEntity<Object> Cancelling_booking_movie(@PathVariable("user_id") Long userId, @PathVariable("booking_id") Long bookingId){
+    public ResponseEntity<Object> cancellingBookingMovie(@PathVariable("user_id") Long userId, @PathVariable("booking_id") Long bookingId){
         try{
-            return new ResponseEntity<>(bookingService.Cancelling_booking_movie(userId,bookingId),HttpStatus.OK);
+            return new ResponseEntity<>(bookingService.cancellingBookingMovie(userId,bookingId),HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/getBooking/{user_id}/{boking_id}")
-    public ResponseEntity<Object> get_booking_details(@PathVariable("user_id")Long userId, @PathVariable("boking_id")Long bokingId){
+    public ResponseEntity<Object> getBookingDetails(@PathVariable("user_id")Long userId, @PathVariable("boking_id")Long bokingId){
         try{
-            return new ResponseEntity<>(bookingService.get_booking_details(userId,bokingId),HttpStatus.OK);
+            return new ResponseEntity<>(bookingService.getBookingDetails(userId,bokingId),HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }

@@ -1,6 +1,7 @@
 package com.example.movie_booking_system.emailotp;
 
 
+import com.example.movie_booking_system.exceptions.EmailSendingException;
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.Users;
 import jakarta.mail.MessagingException;
@@ -39,17 +40,16 @@ public class OtpEmailController {
             helper.setFrom(EF);
             helper.setTo(email);
             helper.setSubject("OTP Validation");
-            String htmlContent = buildOtpEmailTemplate(name,otp);
+            String htmlContent = buildOtpEmailTemplate(name, otp);
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
             logger.info("Email Validation Otp sent Successfully");
-
         } catch (MessagingException e) {
             logger.info(EM + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new EmailSendingException("Failed to send OTP email", e);
         }
     }
 
@@ -72,12 +72,11 @@ public class OtpEmailController {
 
             mailSender.send(mimeMessage);
             logger.info("AuctionWinner Acceptance link Email sent Successfully");
-
         } catch (MessagingException e) {
             logger.info(EM + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new EmailSendingException("Failed to send auction winning email", e);
         }
     }
 
@@ -94,36 +93,32 @@ public class OtpEmailController {
 
             mailSender.send(mimeMessage);
             logger.info("Welcome Email sent Successfully");
-
         } catch (MessagingException e) {
-            logger.info(EM+ e.getMessage());
+            logger.info(EM + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new EmailSendingException("Failed to send welcome email", e);
         }
     }
 
     public void sendReminderEmail(String email, String movieName, LocalDateTime showTime, String name) {
-        try{
+        try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
 
             helper.setFrom(EF);
             helper.setTo(email);
             helper.setSubject("Movie show reminder");
-            String htmlContent = buildMovieReminderTemplate(name,movieName,showTime.toString());
+            String htmlContent = buildMovieReminderTemplate(name, movieName, showTime.toString());
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
             logger.info("Reminder Message sent Successfully");
-
-        }
-        catch(MessagingException e){
-            logger.info(EM+ e.getMessage());
+        } catch (MessagingException e) {
+            logger.info(EM + e.getMessage());
             e.printStackTrace();
-        }
-        catch (Exception e){
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new EmailSendingException("Failed to send movie reminder email", e);
         }
     }
 

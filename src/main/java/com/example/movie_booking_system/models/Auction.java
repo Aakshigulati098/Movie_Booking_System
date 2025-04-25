@@ -77,11 +77,11 @@ public class Auction {
         Winner = winner;
     }
 
-    public Long getMin_Amount() {
+    public Long getMinAmount() {
         return min_Amount;
     }
 
-    public void setMin_Amount(Long minAmount) {
+    public void setMinAmount(Long minAmount) {
         this.min_Amount = minAmount;
     }
 

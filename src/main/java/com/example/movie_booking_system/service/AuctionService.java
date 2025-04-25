@@ -80,7 +80,7 @@ public class AuctionService {
             Auction auction = new Auction();
             auction.setStatus(AuctionStatus.PENDING);
             auction.setCreatedAt(LocalDateTime.now());
-            auction.setMin_Amount(incomingAuction.getMinAmount());
+            auction.setMinAmount(incomingAuction.getMinAmount());
             auction.setSeller(userRepository.findById(incomingAuction.getUserId()).orElse(null));
             // Set the end time to 1 hour from now
             auction.setEndsAt(LocalDateTime.now().plusSeconds(120)); //i have set this auction for 2 minutes
@@ -157,7 +157,7 @@ public class AuctionService {
                     dto.setTime(auction.getBookingId().getShowtime().getTime());
                     dto.setSeats(auction.getBookingId().getSeatIds());
                     dto.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
-                    dto.setOriginalPrice(auction.getMin_Amount());
+                    dto.setOriginalPrice(auction.getMinAmount());
                     dto.setSeller(auction.getSeller().getName());
 
                     LocalDateTime now = LocalDateTime.now();
@@ -245,7 +245,7 @@ public class AuctionService {
             logger.info("Updated auction status to SOLD for auction ID: " + auctionId);
 
             // Transfer booking
-            bookingService.TransferBooking(auction.getBookingId().getId(), userId, auction.getFinalAmount());
+            bookingService.transferBooking(auction.getBookingId().getId(), userId, auction.getFinalAmount());
             logger.info("Booking transferred successfully for auction ID: " + auctionId);
 
             // Delete auction (cascading will handle bids and winner)
