@@ -1,11 +1,11 @@
-package com.example.movie_booking_system.KafkaConsumer;
+package com.example.movie_booking_system.kafkaconsumer;
 
 
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.AuctionStatus;
 import com.example.movie_booking_system.repository.AuctionRepository;
-import com.example.movie_booking_system.repository.UserRepository;
+
 import com.example.movie_booking_system.service.NotificationService;
 import com.example.movie_booking_system.service.RedisService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -22,39 +22,40 @@ public class WinnerNotifyConsumer {
 
     private static final Logger logger = Logger.getLogger(WinnerNotifyConsumer.class.getName());
 
-    @Autowired
+
     private RedisService redisService;
-
-
-    @Autowired
     private NotificationService notificationService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private AuctionRepository auctionRepository;
 
     @Autowired
-    private AuctionRepository auctionRepository;
+    public WinnerNotifyConsumer(RedisService redisService, NotificationService notificationService,  AuctionRepository auctionRepository) {
+        this.redisService = redisService;
+        this.notificationService = notificationService;
+
+        this.auctionRepository = auctionRepository;
+    }
 
 
 
 
     @KafkaListener(topics = "${auction.kafka.topic.winner}", groupId = "${spring.kafka.consumer.group-id}",containerFactory = "stringKafkaListenerContainerFactory")
-    public void consume(ConsumerRecord<String, String> record) {
-        System.out.println("hey i am here in leaderboard consumer");
-        String message = record.value();
-        System.out.println("Received message: " + message);
+    public void consume(ConsumerRecord<String, String> myRecord) {
+        logger.info("hey i am here in leaderboard consumer");
+        String message = myRecord.value();
+        logger.info("Received message: " + message);
 
 //        mujhe idhar kya karna hai
 
 //        top bidder find karo redis ke service se using the hash which is here the key
 
-        Long auctionId = extractAuctionId(record.key());
-        System.out.println("auction id here in winnerNotifyConsumer is: "+auctionId);
+        Long auctionId = extractAuctionId(myRecord.key());
+       logger.info("auction id here in winnerNotifyConsumer is: "+auctionId);
         BidDTO topBidder=redisService.getTopBidForKafka(auctionId);
 
 //        hey handle the null case here
         if(topBidder==null) {
-            System.out.println("no top bidder found");
+            logger.info("no top bidder found");
             logger.info("no top bidder found so need to handle this flow in a different manner ");
 //            here i need to mark the db status to unsold and then do further operations
             Auction auction=auctionRepository.findById(auctionId).orElse(null);

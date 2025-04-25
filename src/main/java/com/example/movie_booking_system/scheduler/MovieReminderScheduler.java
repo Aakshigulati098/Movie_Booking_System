@@ -3,7 +3,7 @@ package com.example.movie_booking_system.scheduler;
 import com.example.movie_booking_system.emailotp.OtpEmailController;
 import com.example.movie_booking_system.models.Booking;
 import com.example.movie_booking_system.repository.BookingReminderRepository;
-import com.example.movie_booking_system.service.EmailSenderService;
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,11 +16,15 @@ import java.util.List;
 @Component
 public class MovieReminderScheduler {
 
-    @Autowired
+
     BookingReminderRepository bookingReminderRepository;
+    OtpEmailController otpEmailController;
 
     @Autowired
-    OtpEmailController otpEmailController;
+    public MovieReminderScheduler(BookingReminderRepository bookingReminderRepository, OtpEmailController otpEmailController) {
+        this.bookingReminderRepository = bookingReminderRepository;
+        this.otpEmailController = otpEmailController;
+    }
 
     @Transactional
     @Scheduled(fixedRate = 60000)

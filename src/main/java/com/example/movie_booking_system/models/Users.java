@@ -6,11 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import java.util.function.Supplier;
+
+
 
 @Entity
 @Table(name = "users")
-public class Users {
+public class Users  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -95,8 +96,6 @@ public class Users {
         this.address = address;
     }
 
-    public Users orElseGet(Supplier<? extends Users> supplier) {
-        return this != null ? this : supplier.get();
-    }
+
 }
 

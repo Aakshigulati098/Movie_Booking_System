@@ -12,8 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 public class ShowTimeController {
 
-    @Autowired
+
     private ShowTimeService showTimeService;
+    @Autowired
+    public ShowTimeController(ShowTimeService showTimeService) {
+        this.showTimeService = showTimeService;
+    }
 
     @GetMapping("/getAllShows")
     public ResponseEntity<Object> getAllShows() {

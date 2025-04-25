@@ -6,7 +6,9 @@ public class BidDTO {
     private Long userId;
     private Long amount;
 
-    public BidDTO() {}
+    public BidDTO() {
+//        no args constructor
+    }
 
 
 

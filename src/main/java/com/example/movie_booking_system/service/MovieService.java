@@ -12,14 +12,19 @@ import org.springframework.web.server.ResponseStatusException;
 
 
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Service
 public class MovieService {
 
-    @Autowired
+
     private  MovieRepository movieRepository;
-//    private final RestTemplate restTemplate;
+
+    @Autowired
+    public MovieService(MovieRepository movieRepository) {
+        this.movieRepository = movieRepository;
+    }
+
 
     // Convert Movie to MovieDTO
     private MovieDTO convertToDTO(Movie movie) {
@@ -32,33 +37,13 @@ public class MovieService {
         return movieDTO;
     }
 
-//    // Convert MovieDTO to Movie
-//    private Movie convertToEntity(MovieDTO movieDTO) {
-//        Movie movie = new Movie();
-//        movie.setId(movieDTO.getId());
-//        movie.setTitle(movieDTO.getTitle());
-//        movie.setImage(movieDTO.getImage());
-//        movie.setType(movieDTO.getType());
-//        movie.setStatus(movieDTO.getStatus());
-//        movie.setReleaseDate(movieDTO.getReleaseDate());
-//        return movie;
-//    }
-
-
-
-//    public MovieService(MovieRepository movieRepository) {
-//        this.movieRepository = movieRepository;
-////        this.restTemplate = new RestTemplate();
-//    }
-
-
 
 public List<MovieDTO> getAllMovies() {
     List<Movie> movies = movieRepository.findAll();
     if (movies.isEmpty()) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No movies found in the database");
     }
-    return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
+    return movies.stream().map(this::convertToDTO).toList();
 }
 
     // ✅ Add a new movie
@@ -77,7 +62,7 @@ public List<MovieDTO> getAllMovies() {
         if (movies.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No movies found for now showing");
         }
-        return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return movies.stream().map(this::convertToDTO).toList();
     }
 
     // Method to get the first 9 movies that are coming soon
@@ -86,7 +71,7 @@ public List<MovieDTO> getAllMovies() {
         if (movies.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No movies found for coming soon");
         }
-        return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return movies.stream().map(this::convertToDTO).toList();
     }
 
     public List<String> getUniqueCategories() {
@@ -94,6 +79,6 @@ public List<MovieDTO> getAllMovies() {
         return movies.stream()
                 .map(Movie::getGenre)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 }

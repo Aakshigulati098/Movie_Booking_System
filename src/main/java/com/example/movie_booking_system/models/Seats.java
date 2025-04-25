@@ -25,9 +25,7 @@ public class Seats {
         return Seatrow;
     }
 
-    public void setRow(String Seatrow) {
-        this.Seatrow = Seatrow;
-    }
+
 
     private String section;
     private String Seatrow;

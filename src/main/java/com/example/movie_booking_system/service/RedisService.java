@@ -25,18 +25,26 @@ public class RedisService {
 
     private static final Logger logger = Logger.getLogger(RedisService.class.getName());
 
-    @Autowired
+    private static final String AUCTION_KEY_PREFIX = "auction";
+    private static final String AUCTION_BID_KEY_PREFIX = ":bids";
+    private static final String AUCTION_USER_KEY_PREFIX = ":user";
+    private static final String AUCTION_LEADERBOARD_KEY_PREFIX = ":leaderboard";
+    private static final String AUCTION_PREFIX = "auction:";
+    private static final String REPEATED="Auction not found";
     private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
     private UserRepository userRepository;
+    private AuctionRepository auctionRepository;
 
     @Autowired
-    private AuctionRepository auctionRepository;
+    public RedisService(RedisTemplate<String, Object> redisTemplate, UserRepository userRepository, AuctionRepository auctionRepository) {
+        this.redisTemplate = redisTemplate;
+        this.userRepository = userRepository;
+        this.auctionRepository = auctionRepository;
+    }
 
     public void saveAuctionMetadata(Long auctionId, String status, LocalDateTime endTime) {
 //        !here this is my key basically for storing the auction status
-        String key = "auction" + auctionId;
+        String key = AUCTION_KEY_PREFIX + auctionId;
         redisTemplate.opsForHash().put(key, "status", status);
         redisTemplate.opsForHash().put(key, "endTime", endTime.toString());
         long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), endTime).getSeconds());
@@ -46,22 +54,23 @@ public class RedisService {
     }
 
     public Map<Long, Map<String, String>> getAllActiveAuctions() {
-        System.out.println("hey i am here in getAllActiveAuctions redis");
+        logger.info("hey i am here in getAllActiveAuctions redis");
         Set<String> keys = redisTemplate.keys("auction*");
-        System.out.println("Keys of all active auctions: " + keys);
+        logger.info("Keys of all active auctions: " + keys);
+
         return keys.stream()
-                .filter(key -> !key.contains(":bids")&& !key.contains(":user:") &&!key.contains(":leaderboard") && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
-                .collect(Collectors.toMap(
-                        key -> Long.parseLong(key.replace("auction", "")),
-                        key -> redisTemplate.<String, String>opsForHash().entries(key)
-                ));
+                        .filter(key -> !key.contains(AUCTION_BID_KEY_PREFIX) && !key.contains(AUCTION_USER_KEY_PREFIX) && !key.contains(AUCTION_LEADERBOARD_KEY_PREFIX) && "ACTIVE".equals(redisTemplate.opsForHash().get(key, "status")))
+                        .collect(Collectors.toMap(
+                                key -> Long.parseLong(key.replace(AUCTION_KEY_PREFIX, "")),
+                                key -> redisTemplate.<String, String>opsForHash().entries(key)
+                        ));
     }
 
     public void createLeaderboard(Long auctionId) {
         // No need to initialize the ZSET, it will be created when the first bid is added
-        String key = "auction" + auctionId + ":bids";
+        String key = AUCTION_KEY_PREFIX + auctionId + AUCTION_BID_KEY_PREFIX;
 
-        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException(REPEATED));
 
         long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
 
@@ -74,8 +83,8 @@ public class RedisService {
      * If the user has already bid, their previous bid will be replaced
      */
     public void addBidToLeaderboard(Long auctionId, BidDTO bid) {
-        String key = "auction" + auctionId + ":bids";
-        String userKey = "auction:" + auctionId + ":user:" + bid.getUserId();
+        String key = AUCTION_KEY_PREFIX + auctionId + AUCTION_BID_KEY_PREFIX;
+        String userKey = AUCTION_KEY_PREFIX + auctionId + ":user:" + bid.getUserId();
 
         // First, check if this user has a previous bid in this auction
         BidDTO existingBid = getUserBid(auctionId, bid.getUserId());
@@ -89,7 +98,7 @@ public class RedisService {
         // Add the new bid
         redisTemplate.opsForZSet().add(key, bid, bid.getAmount());
 
-        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException(REPEATED));
 
         long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
 
@@ -104,7 +113,7 @@ public class RedisService {
      * Get a user's current bid for an auction
      */
     public BidDTO getUserBid(Long auctionId, Long userId) {
-        String userKey = "auction:" + auctionId + ":user:" + userId;
+        String userKey = AUCTION_PREFIX + auctionId + ":user:" + userId;
         Object userBid = redisTemplate.opsForValue().get(userKey);
 
         if (userBid != null) {
@@ -113,18 +122,18 @@ public class RedisService {
 //        agar userBid null hai toh fir toh user ne kabhi part liya hi nahi hai na ?
 
         // If not found in the direct lookup, search in the leaderboard
-        String leaderboardKey = "auction" + auctionId + ":bids";
+        String leaderboardKey = AUCTION_KEY_PREFIX + auctionId + AUCTION_BID_KEY_PREFIX;
         Set<Object> bids = redisTemplate.opsForZSet().range(leaderboardKey, 0, -1);
 
-        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+        Auction auction=auctionRepository.findById(auctionId).orElseThrow(() -> new IllegalArgumentException(REPEATED));
 
         long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), auction.getEndsAt()).getSeconds());
 
         if (bids != null) {
             for (Object bidObj : bids) {
-                System.out.println("here the object bidObj is : " + bidObj);
+                logger.info("here the object bidObj is : " + bidObj);
                 BidDTO bidDTO = (BidDTO) bidObj;
-                System.out.println("here the bidDTO is: " + bidDTO);
+                logger.info("here the bidDTO is: " + bidDTO);
 
 //                if i am getting a bid match then what am i sending here should not i directly send ?
                 if (bidDTO.getUserId().equals(userId)) {
@@ -142,7 +151,7 @@ public class RedisService {
     }
 
     public BidDTO getTopBid(Long auctionId) {
-        String key = "auction" + auctionId + ":bids";
+        String key = AUCTION_KEY_PREFIX + auctionId + AUCTION_BID_KEY_PREFIX;
         Set<ZSetOperations.TypedTuple<Object>> topBids = redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 0);
 
         if (topBids != null && !topBids.isEmpty()) {
@@ -156,11 +165,11 @@ public class RedisService {
     }
 
     public Set<BidResponseDTO> getLeaderboard(Long auctionId) {
-        System.out.println("hey i am here in leaderboard");
-        String key = "auction" + auctionId + ":bids";
-        System.out.println("Key: " + key);
+        logger.info("hey i am here in leaderboard");
+        String key = AUCTION_KEY_PREFIX + auctionId + AUCTION_BID_KEY_PREFIX;
+        logger.info("Key: " + key);
         Set<ZSetOperations.TypedTuple<Object>> bids = redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, -1);
-        System.out.println("Fetched bids: " + bids);
+        logger.info("Fetched bids: " + bids);
         if (bids == null || bids.isEmpty()) {
             return Collections.emptySet();
         }
@@ -176,7 +185,7 @@ public class RedisService {
             bidResponseDTO.setBidder(userRepository.findById(bidDTO.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + bidDTO.getUserId()))
                     .getName());
-            System.out.println("the bidder is here in redis service "+bidResponseDTO.getBidder());
+            logger.info("the bidder is here in redis service "+bidResponseDTO.getBidder());
             bidResponseDTO.setAmount(bidDTO.getAmount());
             return bidResponseDTO;
         }).collect(Collectors.toSet());
@@ -185,10 +194,10 @@ public class RedisService {
 
     @SuppressWarnings("unchecked")
     public void createAndSaveLeaderboard(Long auctionId, Set<BidResponseDTO> leaderboard) {
-        String key = "auction:" + auctionId + ":leaderboard";
+        String key = AUCTION_PREFIX+ auctionId + AUCTION_LEADERBOARD_KEY_PREFIX;
         if (leaderboard == null || leaderboard.isEmpty()) {
             // Log or handle the case when there are no bids
-            System.out.println("No bids for auction ID: " + auctionId + ", skipping Redis leaderboard save.");
+            logger.info("No bids for auction ID: " + auctionId + ", skipping Redis leaderboard save.");
             return;
         }
 
@@ -204,7 +213,7 @@ public class RedisService {
 
 
     public BidDTO getTopBidForKafka(Long auctionId) {
-        String key = "auction:" + auctionId + ":leaderboard";
+        String key = AUCTION_PREFIX + auctionId + AUCTION_LEADERBOARD_KEY_PREFIX;
         Set<ZSetOperations.TypedTuple<Object>> topBids = redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, 0);
         logger.info("Fetching top bids for auctionId: " + auctionId);
 
@@ -232,7 +241,7 @@ public class RedisService {
 
 
     public void deleteBidderFromLeaderboard(BidDTO bidDTO) {
-        String key = "auction:" + bidDTO.getAuctionId() + ":leaderboard";
+        String key = AUCTION_PREFIX + bidDTO.getAuctionId() + AUCTION_LEADERBOARD_KEY_PREFIX;
         logger.info("Starting removal of bidder {} from auction {} leaderboard"+ bidDTO.getUserId()+ bidDTO.getAuctionId());
 
         // Log current leaderboard state
@@ -241,8 +250,8 @@ public class RedisService {
 
         if (entries != null) {
             long entriesRemoved = entries.stream()
-                    .filter(entry -> entry instanceof BidResponseDTO)
-                    .map(entry -> (BidResponseDTO) entry)
+                    .filter(BidResponseDTO.class::isInstance)
+                    .map(BidResponseDTO.class::cast)
                     .filter(bid -> {
                         boolean matches = bid.getBidderId().equals(bidDTO.getUserId());
                         if (matches) {
@@ -251,20 +260,12 @@ public class RedisService {
                         }
                         return matches;
                     })
-                    .map(bid -> {
-                        redisTemplate.opsForZSet().remove(key, bid);
-                        logger.info("Removed bid from leaderboard for user {}"+ bid.getBidderId());
-                        return bid;
-                    })
                     .count();
 
             logger.info("Removed {} entries from leaderboard for user {}"+ entriesRemoved+ bidDTO.getUserId());
         }
 
         // Remove from user's bid cache
-        String userKey = "auction:" + bidDTO.getAuctionId() + ":user:" + bidDTO.getUserId();
-        Boolean deleted = redisTemplate.delete(userKey);
-//        logger.info("User bid cache deletion for key {}: {}"+ userKey+ deleted ? "successful" : "not found");
 
         // Log final leaderboard state
         Set<Object> finalEntries = redisTemplate.opsForZSet().range(key, 0, -1);

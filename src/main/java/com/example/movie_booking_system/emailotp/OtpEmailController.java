@@ -1,5 +1,6 @@
 package com.example.movie_booking_system.emailotp;
 
+
 import com.example.movie_booking_system.models.Auction;
 import com.example.movie_booking_system.models.Users;
 import jakarta.mail.MessagingException;
@@ -11,30 +12,41 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import jakarta.mail.internet.MimeMessage;
 
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 
 @Service
 public class OtpEmailController {
 
+    private static final java.util.logging.Logger logger = Logger.getLogger(OtpEmailController.class.getName());
+
+
+    private final JavaMailSender mailSender;
+
     @Autowired
-    private JavaMailSender mailSender;
+    public OtpEmailController(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
+    private static final String EF="ashirvadpandey123@gmail.com";
+    private static final String EM="Error while sending email: ";
 
     public void sendOtpEmail(String name, String email, String otp) {
-        System.out.println("Sending OTP " + otp + " to email: " + email);
+        logger.info("Sending OTP " + otp + " to email: " + email);
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-            helper.setFrom("ashirvadpandey123@gmail.com");
+            helper.setFrom(EF);
             helper.setTo(email);
             helper.setSubject("OTP Validation");
             String htmlContent = buildOtpEmailTemplate(name,otp);
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("Email Validation Otp sent Successfully");
+            logger.info("Email Validation Otp sent Successfully");
 
         } catch (MessagingException e) {
-            System.err.println("Error while sending email: " + e.getMessage());
+            logger.info(EM + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -42,11 +54,11 @@ public class OtpEmailController {
     }
 
     public void sendAuctionWinningMail(Users user, Auction auction) {
-        System.out.println("Sending Auction Winner mail with name " + user.getName() + " to email: " + user.getEmail());
+        logger.info("Sending Auction Winner mail with name " + user.getName() + " to email: " + user.getEmail());
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-            helper.setFrom("ashirvadpandey123@gmail.com");
+            helper.setFrom(EF);
             helper.setTo(user.getEmail());
             helper.setSubject("Auction Winning Acceptance Link");
             String emailContent = buildPremiumAuctionWinnerTemplate(
@@ -59,10 +71,10 @@ public class OtpEmailController {
             helper.setText(emailContent, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("AuctionWinner Acceptance link Email sent Successfully");
+            logger.info("AuctionWinner Acceptance link Email sent Successfully");
 
         } catch (MessagingException e) {
-            System.err.println("Error while sending email: " + e.getMessage());
+            logger.info(EM + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -70,21 +82,21 @@ public class OtpEmailController {
     }
 
     public void sendWelcomeEmail(String name, String email){
-        System.out.println("Sending Welcome email to email: " + email);
+        logger.info("Sending Welcome email to email: " + email);
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-            helper.setFrom("ashirvadpandey123@gmail.com");
+            helper.setFrom(EF);
             helper.setTo(email);
             helper.setSubject("Welcome Mail");
             String htmlContent = buildWelcomeEmailTemplate(name);
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("Welcome Email sent Successfully");
+            logger.info("Welcome Email sent Successfully");
 
         } catch (MessagingException e) {
-            System.err.println("Error while sending email: " + e.getMessage());
+            logger.info(EM+ e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -96,18 +108,18 @@ public class OtpEmailController {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
 
-            helper.setFrom("ashirvadpandey123@gmail.com");
+            helper.setFrom(EF);
             helper.setTo(email);
             helper.setSubject("Movie show reminder");
             String htmlContent = buildMovieReminderTemplate(name,movieName,showTime.toString());
             helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("Reminder Message sent Successfully");
+            logger.info("Reminder Message sent Successfully");
 
         }
         catch(MessagingException e){
-            System.err.println("Error while sending email: " + e.getMessage());
+            logger.info(EM+ e.getMessage());
             e.printStackTrace();
         }
         catch (Exception e){

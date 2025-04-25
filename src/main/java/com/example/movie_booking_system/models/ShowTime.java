@@ -1,7 +1,7 @@
 package com.example.movie_booking_system.models;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "showtime")
@@ -27,7 +27,7 @@ public class ShowTime {  // ✅ PascalCase for class name
     public ShowTime() {}
 
 
-    public ShowTime(Long id, Long price, Theatre theatre, String time) {
+    public ShowTime(Long id, Long price,  String time) {
         this.id = id;
 
         this.price = price;

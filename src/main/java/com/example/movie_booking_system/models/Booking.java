@@ -3,7 +3,7 @@ package com.example.movie_booking_system.models;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Entity
 @Table(name = "booking")
@@ -80,8 +80,8 @@ public class Booking {
         return booking_date;
     }
 
-    public void setBooking_date(LocalDateTime booking_date) {
-        this.booking_date = booking_date;
+    public void setBooking_date(LocalDateTime bookingDate) {
+        this.booking_date = bookingDate;
     }
 
     public String getSeatIds() {
@@ -100,12 +100,12 @@ public class Booking {
         this.reminderSent = reminderSent;
     }
 
-    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, String seat) {
+    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime bookingDate, String seat) {
         this.id = id;
         this.user = user;
         this.showtime = showtime;
         this.amount = amount;
-        this.booking_date = booking_date;
+        this.booking_date = bookingDate;
         this.seatIds = seat;
     }
 }

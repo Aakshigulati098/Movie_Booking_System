@@ -26,17 +26,19 @@ import java.util.logging.Logger;
 @RequestMapping("/auction")
 public class AuctionController {
 
-    @Autowired
+
     private AuctionService auctionService;
-
-    @Autowired
     private BidHandlerService bidHandlerService;
-
-    @Autowired
     private RedisService redisService;
+    private UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    public AuctionController(AuctionService auctionService, BidHandlerService bidHandlerService, RedisService redisService, UserRepository userRepository) {
+        this.auctionService = auctionService;
+        this.bidHandlerService = bidHandlerService;
+        this.redisService = redisService;
+        this.userRepository = userRepository;
+    }
 
 
 
@@ -58,7 +60,7 @@ public class AuctionController {
     }
 
     @PostMapping("/createAuction")
-    public ResponseEntity<?> createAuction(@RequestBody CreateAuctionDTO incomingAuction){
+    public ResponseEntity<Object> createAuction(@RequestBody CreateAuctionDTO incomingAuction){
 
 
         try{
@@ -78,7 +80,7 @@ public class AuctionController {
     }
 
     @PostMapping("/handleBid/{auctionId}")
-    public ResponseEntity<?> handleBid(@PathVariable Long auctionId, @RequestBody BidDTO bid) {
+    public ResponseEntity<Object> handleBid(@PathVariable Long auctionId, @RequestBody BidDTO bid) {
         //this will be the function that will handle the bid
         try{
            if(bidHandlerService.handleBid(auctionId, bid)) {
@@ -101,12 +103,12 @@ public class AuctionController {
     @GetMapping("/activeAuctions")
     public ResponseEntity<List<AuctionResponseDTO>> getActiveAuctions() {
         Map<Long, Map<String, String>> activeAuctions = redisService.getAllActiveAuctions();
-        System.out.println("active auctions: " + activeAuctions);
+        logger.info("active auctions: " + activeAuctions);
         List<AuctionResponseDTO> responseList = activeAuctions.entrySet().stream().map(entry -> {
             Long auctionId = entry.getKey();
             Map<String, String> auctionData = entry.getValue();
 
-            System.out.println("auction data: " + auctionData);
+            logger.info("auction data: " + auctionData);
 
             // Fetch auction details from the database
             Auction auction = auctionService.getAuctionById(auctionId);
@@ -115,20 +117,19 @@ public class AuctionController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Auction not found");
             }
 
-            System.out.println("auction: " + auction);
+            logger.info("auction: " + auction);
 
             // Fetch bids for the auction
             Set<BidResponseDTO> bids = redisService.getLeaderboard(auctionId);
-            System.out.println("bids here is : " + bids);
+            logger.info("bids here is : " + bids);
 
             // Create ResponseDTO
             AuctionResponseDTO response = new AuctionResponseDTO();
-            System.out.println("response here is : " + response);
+            logger.info("response here is : " + response);
 
-//        Booking booking = bookingRepository.findById(auction.getBookingId());
 
 //bhai movie ke liye to entity mai changes karne hi padenge and we have got no other option
-//        response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
+//
             response.setId(auction.getId());
             response.setTheater(auction.getBookingId().getShowtime().getTheatre().getName());
             response.setShowtime(auction.getBookingId().getShowtime().getTime());
@@ -138,7 +139,7 @@ public class AuctionController {
 //        this i need to figure out
 
             BidDTO topBid = redisService.getTopBid(auctionId);
-            System.out.println("top bid here is : " + topBid);
+            logger.info("top bid here is : " + topBid);
 
             if (topBid != null) {
                 response.setCurrentBid(topBid.getAmount());
@@ -155,8 +156,7 @@ public class AuctionController {
 
             response.setEndTime(auction.getEndsAt());
 //we do not have the movie data in the booking so need to inject that to get this data will look into it later won't be much of a issue
-//        response.setImageUrl(auction.getBookingId().getMovie().getImageUrl());
-//        response.setDescription(auction.getBookingId().getMovie().getDescription());
+
             response.setBids(new ArrayList<>(bids));
             response.setImageUrl(auction.getBookingId().getMovie().getImage());
             response.setMovieTitle(auction.getBookingId().getMovie().getTitle());
@@ -212,7 +212,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
     return ResponseEntity.ok(response);
 }
     @GetMapping("/pending-payment/{userId}")
-    public ResponseEntity<?> getPendingPayments(@PathVariable Long userId) {
+    public ResponseEntity<Object> getPendingPayments(@PathVariable Long userId) {
         try {
             List<PendingAuctionDTO> pendingPayments = auctionService.getPendingPayments(userId);
             // Always return 200 OK with the list (even if empty)
@@ -223,7 +223,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
         }
     }
     @PutMapping("/AuctionWinRejectResponse/{userId}/{auctionId}")
-    public ResponseEntity<?> handleAuctionWinRejectResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+    public ResponseEntity<Object> handleAuctionWinRejectResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
         try {
             auctionService.handleRejection(auctionId);
             return ResponseEntity.ok("Response recorded successfully");
@@ -241,7 +241,7 @@ public ResponseEntity<AuctionResponseDTO> getAuctionDetails(@PathVariable Long a
 //    whose sole purpose is to trigger the fetching of booking details again once they get any message to this channel
 
     @PutMapping("/AuctionWinAcceptResponse/{userId}/{auctionId}")
-    public ResponseEntity<?> handleAuctionWinAcceptResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
+    public ResponseEntity<Object> handleAuctionWinAcceptResponse(@PathVariable Long userId, @PathVariable Long auctionId) {
         try {
             auctionService.handleAcceptance(auctionId,userId);
             return ResponseEntity.ok("Response recorded successfully");
