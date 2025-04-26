@@ -112,36 +112,6 @@ public class EmailSenderService {
             String htmlContent = buildEmailTemplate(userName, theaterName, movieName, date, showTime, seatNumber, posterUrl);
             helper.setText(htmlContent, true); // Set "true" for HTML content
 
-            // TODO:Confirm the poster URL --> Save The Poster Temporarily to buffer --> Send Poster As Attachment:
-//    if (posterUrl != null && !posterUrl.isEmpty()) {
-//        System.out.println("Poster URL retrieved successfully: " + posterUrl);
-//    } else {
-//        System.out.println("Poster URL not found or is empty!SHUTTING_DOWN");
-//    }
-//        // Attach the image
-//        try {
-//            // Download and save the image locally
-//            URL posterURL = new URL(posterUrl); // From the previous step
-//            File tempFile = new File("poster.jpg"); // Save as "poster.jpg" in the current directory
-//            try (InputStream inputStream = posterURL.openStream();
-//                 FileOutputStream outputStream = new FileOutputStream(tempFile)) {
-//
-//                byte[] buffer = new byte[1024];
-//                int bytesRead;
-//                while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                    outputStream.write(buffer);
-//                }
-//            }
-//
-//            System.out.println("Poster saved successfully: " + tempFile.getAbsolutePath());
-//
-//            // Attach the file to the email
-//            helper.addAttachment("movie-poster.jpg", tempFile);
-//
-//        } catch (Exception e) {
-//            System.err.println("Error while saving or attaching poster: " + e.getMessage());
-//            e.printStackTrace();
-//        }
             //   TODO:END||Confirm the poster URL --> Save The Poster Temporarily to buffer --> Send Poster As Attachment:
 
             mailSender.send(mimeMessage);

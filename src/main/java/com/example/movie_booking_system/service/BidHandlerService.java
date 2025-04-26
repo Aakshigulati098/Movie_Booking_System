@@ -50,26 +50,16 @@ public class BidHandlerService {
             try {
                 logger.info("Lock acquired for auction ID: " + auctionId);
 
-                // Validate the bid
-                Optional<BidDTO> topBidOpt = Optional.ofNullable(redisService.getTopBid(auctionId));
-
-                // Check if the user is the auction owner
-                Long auctionIdd=bid.getAuctionId();
-                Long auctionOwnerId=auctionRepository.findById(auctionIdd)
+                // Check if the auction exists and fetch the owner
+                Long auctionOwnerId = auctionRepository.findById(auctionId)
                         .orElseThrow(() -> new IllegalArgumentException("Auction not found"))
                         .getSeller()
                         .getId();
 
+                // Check if the user is the auction owner
                 if (bid.getUserId().equals(auctionOwnerId)) {
                     throw new IllegalArgumentException("You cannot bid on your own auction.");
                 }
-
-                // If there is a top bid, validate the new bid is higher
-                topBidOpt.ifPresent(topBid -> {
-                    if (bid.getAmount() <= topBid.getAmount()) {
-                        throw new IllegalArgumentException("Bid amount must be higher than the current highest bid.");
-                    }
-                });
 
                 // Check if the auction is active
                 String auctionStatus = (String) redisTemplate.opsForHash().get("auction" + auctionId, "status");
@@ -86,6 +76,14 @@ public class BidHandlerService {
                         throw new IllegalArgumentException("Auction has already ended.");
                     }
                 }
+
+                // Validate the bid amount
+                Optional<BidDTO> topBidOpt = Optional.ofNullable(redisService.getTopBid(auctionId));
+                topBidOpt.ifPresent(topBid -> {
+                    if (bid.getAmount() <= topBid.getAmount()) {
+                        throw new IllegalArgumentException("Bid amount must be higher than the current highest bid.");
+                    }
+                });
 
                 // Check if the user already has a bid for this auction
                 Optional<Bids> existingBid = bidsRepository.findByUserIdIdAndAuctionIdId(bid.getUserId(), bid.getAuctionId());
@@ -122,7 +120,7 @@ public class BidHandlerService {
 
             } catch (IllegalArgumentException e) {
                 logger.warning("Validation error: " + e.getMessage());
-                return false;
+                throw e; // Rethrow the exception to propagate it to the test case
             } catch (Exception e) {
                 logger.severe("Error handling bid: " + e.getMessage());
                 return false;

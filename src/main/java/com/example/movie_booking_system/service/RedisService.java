@@ -34,6 +34,7 @@ public class RedisService {
     @Autowired
     private AuctionRepository auctionRepository;
 
+
     public void saveAuctionMetadata(Long auctionId, String status, LocalDateTime endTime) {
 //        !here this is my key basically for storing the auction status
         String key = "auction" + auctionId;

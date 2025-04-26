@@ -12,7 +12,7 @@ public class Seats {
     @ManyToOne
     @JoinColumn(name = "showtime_id", referencedColumnName = "id", nullable = false)
     private ShowTime showtime;
-
+    private String Seatrow;
     public String getSection() {
         return section;
     }
@@ -25,12 +25,12 @@ public class Seats {
         return Seatrow;
     }
 
-    public void setRow(String Seatrow) {
+    public void setSeatRow(String Seatrow) {
         this.Seatrow = Seatrow;
     }
 
     private String section;
-    private String Seatrow;
+
 
     private Long seatNumber;
     private Boolean seatAvailable;
@@ -80,6 +80,7 @@ public class Seats {
     public void setSeatAvailable(Boolean seatAvailable) {
         this.seatAvailable = seatAvailable;
     }
+
 
 
 }

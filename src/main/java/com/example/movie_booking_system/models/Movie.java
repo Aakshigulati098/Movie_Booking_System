@@ -78,9 +78,8 @@ public class Movie {  // ✅ Class name should be capitalized
     }
 
     public String getGenre() {
-        return genre;
+        return genre != null ? genre : ""; // Return an empty string if genre is null
     }
-
     public void setGenre(String genre) {
         this.genre = genre;
     }
@@ -117,11 +116,14 @@ public class Movie {  // ✅ Class name should be capitalized
         this.imageUrls = imageUrls;
     }
 
-    public String getImage() {
-        return imageUrls.split(",")[0];
+    public String getImage(){
+        return this.imageUrls; // Return the single image URL directly
     }
 
     public String getType() {
+        if (genre == null || genre.isEmpty()) {
+            return ""; // Return empty string or some default value
+        }
         return genre.split(",")[0];
     }
 }

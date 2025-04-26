@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -57,6 +58,7 @@ public class BookingService {
 //    @Autowired
 //    private PaymentService paymentService; // Inject Payment Service
 
+
     public Long getSeatId(Long seatNumber, Long showtimeId) {
         return seatsRepository.findSeatIdBySeatNumberAndShowtime(seatNumber, showtimeId)
                 .orElseThrow(() -> new RuntimeException("Seat not found for seatNumber: "
@@ -68,6 +70,8 @@ public class BookingService {
     @Transactional
     public boolean booking_Movie(Long user_id, List<Long> seatId,Long movie_id) throws MessagingException {
 
+        Users user = userRepository.findById(user_id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
         for(Long seat: seatId){
             Seats seats = seatsRepository.findById(seat)
                     .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
@@ -84,16 +88,9 @@ public class BookingService {
 //            idhar tak ho gaya hai jo hona hai sare unavailable
 
         }
-
 //        Users user = userRepository.findById(user_id)
 //                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
 //
-
-
-
-        Users user = userRepository.findById(user_id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
-
         String email = user.getEmail();
         String name = user.getName();
 
@@ -132,25 +129,6 @@ public class BookingService {
 
 //        send the mail only it is done !!!
         triggerMail(email, name, theatre_name, movie_name, dateString, showTime, seatDetails.toString());
-
-
-//        ShowTime showtime = showTimeRepository.findById(seats.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
-
-
-        // Mark seat as booked
-
-
-//        idhar se hi cheezo ko call kar dena hai
-
-        // Create and save booking
-//        Booking booking = new Booking();
-//        booking.setBooking_date(LocalDateTime.now());
-//        booking.setUser(user);
-//        booking.setSeat(seat);
-//        booking.setAmount(showtime.getPrice());
-//        booking.setShowtime(showtime);
-
-//        return bookingRepository.save(booking);
 
         return true;
     }
@@ -215,7 +193,7 @@ public class BookingService {
     }
 
     // Helper method to parse seat details string and extract seat IDs
-    private List<Long> parseSeatDetails(String seatDetailsString) {
+    public List<Long> parseSeatDetails(String seatDetailsString) {
         List<Long> seatIds = new ArrayList<>();
 
         // Split the seat details string into individual seat entries
@@ -243,43 +221,6 @@ public class BookingService {
 
         return seatIds;
     }
-//    public boolean SuccessfulEmailsending(Long userId, Long movieId, List<Long> seatIds) {
-//
-//        try {
-//            Users user = userRepository.findById(userId)
-//                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
-//
-//            String email = user.getEmail();
-//            String name = user.getName();
-//
-//            Seats seat = seatsRepository.findById(seatIds.get(0)).orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatIds.get(0)));
-//            ShowTime showtime = showTimeRepository.findById(seat.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
-//            String showTime = showtime.getTime();
-//            Theatre theatre = theatreRepository.findById(showtime.getTheatre().getId()).orElseThrow(() -> new RuntimeException("Theatre not found"));
-//            String theatre_name = theatre.getName();
-//
-//            Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movieId));
-//            String movie_name = movie.getTitle();
-//            LocalDate currentDate = LocalDate.now();
-//
-//            // Convert the date to a string using the default format (ISO-8601)
-//            String dateString = currentDate.toString();
-//
-//            StringBuilder seatDetails = new StringBuilder();
-//            for (Long seatId : seatIds) {
-//                Seats s = seatsRepository.findById(seatId)
-//                        .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
-//                seatDetails.append("Row: ").append(s.getSeatRow()).append(", Number: ").append(s.getSeatNumber()).append("; ");
-//            }
-//
-//            triggerMail(email, name, theatre_name, movie_name, dateString, showTime, seatDetails.toString());
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//
-//        }
-//
-//        return true;
-//    }
 
     public void triggerMail(String email, String name, String theatre_name, String movie_name, String Date, String showtime, String Seats) throws MessagingException {
 //
@@ -302,7 +243,7 @@ public class BookingService {
         return bookings.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    private BookingResponseDTO convertToDTO(Booking booking) {
+    public BookingResponseDTO convertToDTO(Booking booking) {
         return new BookingResponseDTO(
                 booking.getId(),
                 booking.getShowtime().getTheatre().getName(),
@@ -327,7 +268,6 @@ public class BookingService {
 //        abhi websocket topic broadcast karna hai jo ki frontend pe bhi reflect hoga
         webSocketService.sendBookingTransferNotification(id);
         logger.info("WebSocket notification sent for booking transfer with ID: " + id);
-
-
     }
+
 }
