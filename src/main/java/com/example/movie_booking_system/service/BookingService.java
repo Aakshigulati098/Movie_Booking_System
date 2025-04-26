@@ -70,7 +70,7 @@ public class BookingService {
 
     //    need to handle the runtime exception here
     @Transactional
-    public boolean bookingMovie(Long userId, List<Long> seatId, Long movieId) throws MessagingException {
+    public boolean bookingMovie(Long userId, List<Long> seatId, Long movieId)  {
 
         for(Long seat: seatId){
             Seats seats = seatsRepository.findById(seat)
@@ -128,6 +128,7 @@ public class BookingService {
         booking.setShowtime(showtime);
         booking.setUser(user);
         booking.setMovie(movie);
+        booking.setBookingStatus(BookingEnum.OWNED);
 
         bookingRepository.save(booking);
 
@@ -147,6 +148,8 @@ public class BookingService {
             throw new UnauthorizedAccessException("User is not authorized to access this booking.");
         }
 
+        logger.info("hey the booking status is "+booking.getBookingStatus());
+
         // Convert to BookingResponseDTO (unchanged)
         BookingResponseDTO bookingResponseDTO = new BookingResponseDTO();
         bookingResponseDTO.setBookingId(booking.getId());
@@ -155,6 +158,7 @@ public class BookingService {
         bookingResponseDTO.setSeats(booking.getSeatIds());
         bookingResponseDTO.setShowtime(booking.getShowtime().getTime());
         bookingResponseDTO.setMovieImage(booking.getMovie().getImage());
+        bookingResponseDTO.setBookingStatus(booking.getBookingStatus());
 
         return bookingResponseDTO;
     }
@@ -247,7 +251,8 @@ public class BookingService {
                 booking.getSeatIds(),
                 booking.getShowtime().getTime(),
                 booking.getMovie().getTitle(),
-                booking.getMovie().getImage());
+                booking.getMovie().getImage(),
+                booking.getBookingStatus());
     }
 
     public void transferBooking(Long id, Long userId, Long finalAmount) {
@@ -260,6 +265,7 @@ public class BookingService {
 
         booking.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId)));
         booking.setAmount(finalAmount);
+        booking.setBookingStatus(BookingEnum.AUCTIONED);
         bookingRepository.save(booking);
         logger.info("Booking transferred successfully to user with ID: " + userId);
 //        abhi websocket topic broadcast karna hai jo ki frontend pe bhi reflect hoga
