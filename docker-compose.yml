@@ -31,10 +31,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       TZ: "Asia/Kolkata"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      test: ["CMD", "nc", "-z", "localhost", "29092"]
       interval: 10s
       timeout: 5s
       retries: 5
+
 
   app:
     build: .

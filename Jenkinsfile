@@ -2,7 +2,7 @@ pipeline {
 	agent any
 
     environment {
-		IMAGE_NAME = "abirrsahaa/movie-boooking-app"
+		IMAGE_NAME = "abirrsahaa/movie_booking_system-app"
         TAG = "latest"
     }
 
