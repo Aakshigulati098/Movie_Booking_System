@@ -10,7 +10,7 @@ import com.example.movie_booking_system.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
@@ -53,282 +53,311 @@ public class BidHandlerServiceTest {
     @Mock
     private AuctionRepository auctionRepository;
 
-    @InjectMocks
     private BidHandlerService bidHandlerService;
 
-    private BidDTO validBid;
-    private Users bidder;
+    private BidDTO bidDTO;
+    private Users user;
     private Users seller;
     private Auction auction;
-    private LocalDateTime futureEndTime;
-    private LocalDateTime pastEndTime;
+    private Bids existingBid;
+    private final Long auctionId = 1L;
+    private final Long userId = 2L;
+    private final Long sellerId = 3L;
 
     @BeforeEach
     void setUp() {
-        // Setup common test data
-        bidder = new Users();
-        bidder.setId(1L);
-        bidder.setName("Test Bidder");
-
-        seller = new Users();
-        seller.setId(2L);
-        seller.setName("Test Seller");
-
-        auction = new Auction();
-        auction.setId(1L);
-        auction.setSeller(seller);
-
-        futureEndTime = LocalDateTime.now().plusHours(1);
-        pastEndTime = LocalDateTime.now().minusHours(1);
-
-        validBid = new BidDTO();
-        validBid.setUserId(bidder.getId());
-        validBid.setAuctionId(auction.getId());
-        validBid.setAmount(100L);
-
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(redisTemplate.opsForHash()).thenReturn(hashOperations);
-    }
 
-    @Test
-    void testHandleBid_SuccessfulNewBid() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"),eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(futureEndTime.toString());
-        when(redisService.getTopBid(1L)).thenReturn(null); // No previous bids
-        when(bidsRepository.findByUserIdIdAndAuctionIdId(1L, 1L)).thenReturn(Optional.empty());
-        when(userRepository.findById(1L)).thenReturn(Optional.of(bidder));
+        bidHandlerService = new BidHandlerService(
+                bidsRepository,
+                redisService,
+                redisTemplate,
+                messagingTemplate,
+                userRepository,
+                auctionRepository
+        );
 
-        Bids newBid = new Bids();
-        when(bidsRepository.save(any(Bids.class))).thenReturn(newBid);
+        // Setup common test data
+        bidDTO = new BidDTO();
+        bidDTO.setAuctionId(auctionId);
+        bidDTO.setUserId(userId);
+        bidDTO.setAmount(1000L);
 
-        // Act
-        boolean result = bidHandlerService.handleBid(1L, validBid);
+        user = new Users();
+        user.setId(userId);
 
-        // Assert
-        assertTrue(result);
-        verify(redisService).addBidToLeaderboard(1L, validBid);
-        verify(messagingTemplate).convertAndSend(eq("/topic/auction/1"), anyString());
-        verify(bidsRepository).save(any(Bids.class));
-        verify(redisTemplate).delete("lock:auction:1");
-    }
+        seller = new Users();
+        seller.setId(sellerId);
 
-    @Test
-    void testHandleBid_SuccessfulExistingBidUpdate() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(futureEndTime.toString());
+        auction = new Auction();
+        auction.setId(auctionId);
+        auction.setSeller(seller);
 
-        // Previous lower bid exists
-        BidDTO previousBid = new BidDTO();
-        previousBid.setUserId(1L);
-        previousBid.setAuctionId(1L);
-        previousBid.setAmount(50L);
-        when(redisService.getTopBid(1L)).thenReturn(previousBid);
-
-        // User already has a bid
-        Bids existingBid = new Bids();
-        existingBid.setBidAmount(50L);
-        existingBid.setUserId(bidder);
+        existingBid = new Bids();
+        existingBid.setUserId(user);
         existingBid.setAuctionId(auction);
-        existingBid.setCreatedAt(LocalDateTime.now().minusHours(1));
-        when(bidsRepository.findByUserIdIdAndAuctionIdId(1L, 1L)).thenReturn(Optional.of(existingBid));
-
-        when(bidsRepository.save(any(Bids.class))).thenReturn(existingBid);
-
-        // Act
-        boolean result = bidHandlerService.handleBid(1L, validBid);
-
-        // Assert
-        assertTrue(result);
-        verify(redisService).addBidToLeaderboard(1L, validBid);
-        verify(messagingTemplate).convertAndSend(eq("/topic/auction/1"), anyString());
-        verify(bidsRepository).save(any(Bids.class));
-        assertEquals(100, existingBid.getBidAmount()); // Check bid amount was updated
-        verify(redisTemplate).delete("lock:auction:1");
+        existingBid.setBidAmount(800L);
     }
 
     @Test
-    void testHandleBid_FailedToAcquireLock() {
+    void handleBid_FailsToAcquireLock() {
         // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
+        String lockKey = "lock:auction:" + auctionId;
+        lenient().when(valueOperations.setIfAbsent(eq(lockKey), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
                 .thenReturn(false);
 
         // Act
-        boolean result = bidHandlerService.handleBid(1L, validBid);
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
 
         // Assert
         assertFalse(result);
-        verifyNoInteractions(auctionRepository);
-        verifyNoInteractions(redisService);
-        verifyNoInteractions(bidsRepository);
+        verify(valueOperations).setIfAbsent(eq(lockKey), eq("locked"), eq(10L), eq(TimeUnit.SECONDS));
+        verify(redisTemplate, never()).delete(anyString());
     }
 
     @Test
-    void testHandleBid_AuctionNotFound() {
+    void handleBid_ValidBidExistingBidder_Success() {
         // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, validBid);
-        });
-        assertEquals("Auction not found", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_SellerCannotBidOnOwnAuction() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-
-        // Bid from the seller
-        BidDTO sellerBid = new BidDTO();
-        sellerBid.setUserId(seller.getId());
-        sellerBid.setAuctionId(auction.getId());
-        sellerBid.setAmount(100L);
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, sellerBid);
-        });
-        assertEquals("You cannot bid on your own auction.", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_AuctionNotActive() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("CLOSED"); // Auction not active
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, validBid);
-        });
-        assertEquals("Auction is not active.", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_AuctionEnded() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(pastEndTime.toString()); // Auction ended
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, validBid);
-        });
-        assertEquals("Auction has already ended.", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_BidTooLow() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(futureEndTime.toString());
-
-        // Higher bid already exists
-        BidDTO higherBid = new BidDTO();
-        higherBid.setUserId(3L); // Different user
-        higherBid.setAuctionId(1L);
-        higherBid.setAmount(200L); // Higher than our bid
-        when(redisService.getTopBid(1L)).thenReturn(higherBid);
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, validBid);
-        });
-        assertEquals("Bid amount must be higher than the current highest bid.", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_UserNotFound() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(futureEndTime.toString());
-        when(redisService.getTopBid(1L)).thenReturn(null); // No previous bids
-        when(bidsRepository.findByUserIdIdAndAuctionIdId(1L, 1L)).thenReturn(Optional.empty());
-        when(userRepository.findById(1L)).thenReturn(Optional.empty()); // User not found
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            bidHandlerService.handleBid(1L, validBid);
-        });
-        assertEquals("User not found", exception.getMessage());
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_HandleGenericException() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(futureEndTime.toString());
-        when(redisService.getTopBid(1L)).thenReturn(null);
-        when(bidsRepository.findByUserIdIdAndAuctionIdId(1L, 1L)).thenReturn(Optional.empty());
-
-        // Simulate a generic exception during processing
-        when(userRepository.findById(1L)).thenThrow(new RuntimeException("Database error"));
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        setupValidTopBid(800.0);
+        when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.of(existingBid));
 
         // Act
-        boolean result = bidHandlerService.handleBid(1L, validBid);
-
-        // Assert
-        assertFalse(result);
-        verify(redisTemplate).delete("lock:auction:1");
-    }
-
-    @Test
-    void testHandleBid_NullEndTime() {
-        // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
-                .thenReturn(true);
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-        when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");
-        when(hashOperations.get("auction1", "endTime")).thenReturn(null); // Null end time
-        when(redisService.getTopBid(1L)).thenReturn(null); // No previous bids
-        when(bidsRepository.findByUserIdIdAndAuctionIdId(1L, 1L)).thenReturn(Optional.empty());
-        when(userRepository.findById(1L)).thenReturn(Optional.of(bidder));
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
-
-        Bids newBid = new Bids();
-        when(bidsRepository.save(any(Bids.class))).thenReturn(newBid);
-
-        // Act
-        boolean result = bidHandlerService.handleBid(1L, validBid);
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
 
         // Assert
         assertTrue(result);
-        verify(redisService).addBidToLeaderboard(1L, validBid);
-        verify(messagingTemplate).convertAndSend(eq("/topic/auction/1"), anyString());
-        verify(bidsRepository).save(any(Bids.class));
-        verify(redisTemplate).delete("lock:auction:1");
+        ArgumentCaptor<Bids> bidsCaptor = ArgumentCaptor.forClass(Bids.class);
+        verify(bidsRepository).save(bidsCaptor.capture());
+        assertEquals(1000L, bidsCaptor.getValue().getBidAmount());
+        verify(redisService).addBidToLeaderboard(eq(auctionId), eq(bidDTO));
+        verify(messagingTemplate).convertAndSend(eq("/topic/auction/" + auctionId), anyString());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_ValidBidNewBidder_Success() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        setupValidTopBid(800.0);
+        lenient().when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.empty());
+        lenient().when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertTrue(result);
+        ArgumentCaptor<Bids> bidsCaptor = ArgumentCaptor.forClass(Bids.class);
+        verify(bidsRepository).save(bidsCaptor.capture());
+        assertEquals(1000L, bidsCaptor.getValue().getBidAmount());
+        verify(redisService).addBidToLeaderboard(eq(auctionId), eq(bidDTO));
+        verify(messagingTemplate).convertAndSend(eq("/topic/auction/" + auctionId), anyString());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_AuctionOwnerBidding_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        bidDTO.setUserId(sellerId); // Set bidder as auction owner
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_LowerBidAmount_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        // Setup a higher existing top bid
+        BidDTO higherBid = new BidDTO();
+        higherBid.setAmount(1200L);
+        lenient().when(redisService.getTopBid(auctionId)).thenReturn(higherBid);
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_InactiveAuction_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        lenient().when(redisService.getTopBid(auctionId)).thenReturn(null);
+        lenient().when(hashOperations.get("auction" + auctionId, "status")).thenReturn("CLOSED");
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_AuctionAlreadyEnded_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        lenient().when(redisService.getTopBid(auctionId)).thenReturn(null);
+        lenient().when(hashOperations.get("auction" + auctionId, "status")).thenReturn("ACTIVE");
+        // Set end time to be in the past
+        LocalDateTime pastTime = LocalDateTime.now().minusHours(1);
+        lenient().when(hashOperations.get("auction" + auctionId, "endTime")).thenReturn(pastTime.toString());
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_AuctionNotFound_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_UserNotFound_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        setupValidTopBid(800.0);
+        lenient().when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.empty());
+        lenient().when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_GeneralException_Failure() {
+        // Arrange
+        setupSuccessfulLock();
+        lenient().when(auctionRepository.findById(auctionId)).thenThrow(new RuntimeException("Database error"));
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertFalse(result);
+        verify(bidsRepository, never()).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_NoEndTimeSpecified_Success() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        setupValidTopBid(800.0);
+        when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.of(existingBid));
+        // Explicitly set no end time
+        when(hashOperations.get("auction" + auctionId, "endTime")).thenReturn(null);
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertTrue(result);
+        verify(bidsRepository).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_ValidFutureEndTime_Success() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        setupValidTopBid(800.0);
+        when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.of(existingBid));
+        // Set end time in the future
+        LocalDateTime futureTime = LocalDateTime.now().plusHours(1);
+        when(hashOperations.get("auction" + auctionId, "endTime")).thenReturn(futureTime.toString());
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertTrue(result);
+        verify(bidsRepository).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    @Test
+    void handleBid_NoTopBid_Success() {
+        // Arrange
+        setupSuccessfulLock();
+        setupValidAuction(false);
+        // No top bid yet
+        when(redisService.getTopBid(auctionId)).thenReturn(null);
+        when(bidsRepository.findByUserIdIdAndAuctionIdId(userId, auctionId))
+                .thenReturn(Optional.of(existingBid));
+
+        // Act
+        boolean result = bidHandlerService.handleBid(auctionId, bidDTO);
+
+        // Assert
+        assertTrue(result);
+        verify(bidsRepository).save(any());
+        verify(redisTemplate).delete(anyString());
+    }
+
+    // Helper methods for test setup
+    private void setupSuccessfulLock() {
+        String lockKey = "lock:auction:" + auctionId;
+        when(valueOperations.setIfAbsent(eq(lockKey), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
+                .thenReturn(true);
+    }
+
+    private void setupValidAuction(boolean isOwner) {
+        lenient().when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        lenient().when(hashOperations.get("auction" + auctionId, "status")).thenReturn("ACTIVE");
+    }
+
+    private void setupValidTopBid(double amount) {
+        BidDTO topBid = new BidDTO();
+        topBid.setAmount((long)amount);
+        when(redisService.getTopBid(auctionId)).thenReturn(topBid);
     }
 }

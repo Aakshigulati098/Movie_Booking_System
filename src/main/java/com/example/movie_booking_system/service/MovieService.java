@@ -87,6 +87,6 @@ public List<MovieDTO> getAllMovies() {
         if (movies.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No movies found for the genre: " + genre);
         }
-        return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return movies.stream().map(this::convertToDTO).toList();
     }
 }

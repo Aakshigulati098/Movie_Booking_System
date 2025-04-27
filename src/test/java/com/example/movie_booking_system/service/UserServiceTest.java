@@ -1,6 +1,7 @@
 package com.example.movie_booking_system.service;
 
 import com.example.movie_booking_system.emailotp.OtpEmailController;
+import com.example.movie_booking_system.exceptions.UserRegistrationException;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
@@ -9,16 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UserServiceTest {
-
-    @InjectMocks
-    private UserService userService;
 
     @Mock
     private HttpSession session;
@@ -32,93 +30,116 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @InjectMocks
+    private UserService userService;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testSignup_UserAlreadyExists() {
+    void signup_ShouldSendOtpSuccessfully() {
+        // Arrange
+        Users user = new Users();
+        user.setEmail("test@example.com");
+        user.setPassword("password");
+        user.setName("Test User");
+        user.setPhone("1234567890");
+        user.setAddress("Test Address");
+
+        when(userRepository.findByEmail("test@example.com")).thenReturn(null);
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+
+        // Act
+        String result = userService.signup(user);
+
+        // Assert
+        assertEquals("Otp Sent Successfully", result);
+        verify(userRepository, never()).save(any(Users.class));
+        verify(otpEmailController, times(1)).sendOtpEmail(eq("Test User"), eq("test@example.com"), anyString());
+        verify(session, times(1)).setAttribute(eq("otp"), anyString());
+        verify(session, times(1)).setAttribute(eq("otpExpiry"), anyLong());
+    }
+
+    @Test
+    void signup_ShouldThrowExceptionWhenEmailAlreadyExists() {
         // Arrange
         Users existingUser = new Users();
         existingUser.setEmail("test@example.com");
+
         when(userRepository.findByEmail("test@example.com")).thenReturn(existingUser);
 
         Users newUser = new Users();
         newUser.setEmail("test@example.com");
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> userService.signup(newUser));
-        assertEquals("Email already exist with another account", exception.getMessage());
+        UserRegistrationException exception = assertThrows(UserRegistrationException.class, () -> userService.signup(newUser));
+        assertEquals("Email already exists with another account", exception.getMessage());
     }
 
     @Test
-    void testSignup_Successful() {
+    void verifyOtp_ShouldReturnSuccessWhenOtpIsValid() {
         // Arrange
-        Users newUser = new Users();
-        newUser.setEmail("test@example.com");
-        newUser.setPassword("password");
-        newUser.setName("Test User");
-
-        when(userRepository.findByEmail("test@example.com")).thenReturn(null);
-        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+        String inputOtp = "1234";
+        when(session.getAttribute("otp")).thenReturn("1234");
+        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() + 60000);
 
         // Act
-        String result = userService.signup(newUser);
+        ResponseEntity<String> response = userService.verifyOtp(inputOtp);
 
         // Assert
-        assertEquals("Otp Sent Successfully", result);
-        verify(session, times(1)).setAttribute(eq("currentUser"), any(Users.class));
-        verify(otpEmailController, times(1)).sendOtpEmail(eq("Test User"), eq("test@example.com"), anyString());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("OTP verified successfully!", response.getBody());
+        verify(session, times(1)).setAttribute("otpVerified", true);
+        verify(session, times(1)).removeAttribute("otp");
+        verify(session, times(1)).removeAttribute("otpExpiry");
     }
 
     @Test
-    void testVerifyOtp_ExpiredOtp() {
+    void verifyOtp_ShouldReturnUnauthorizedWhenOtpIsExpired() {
         // Arrange
         when(session.getAttribute("otp")).thenReturn("1234");
-        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() - 1000);
+        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() - 60000);
 
         // Act
         ResponseEntity<String> response = userService.verifyOtp("1234");
 
         // Assert
-        assertEquals(401, response.getStatusCodeValue());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("OTP expired. Please request a new one.", response.getBody());
         verify(session, times(1)).removeAttribute("otp");
         verify(session, times(1)).removeAttribute("otpExpiry");
     }
 
     @Test
-    void testVerifyOtp_InvalidOtp() {
+    void verifyOtp_ShouldReturnUnauthorizedWhenOtpIsInvalid() {
         // Arrange
         when(session.getAttribute("otp")).thenReturn("1234");
-        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() + 10000);
+        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() + 60000);
 
         // Act
         ResponseEntity<String> response = userService.verifyOtp("5678");
 
         // Assert
-        assertEquals(401, response.getStatusCodeValue());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Invalid OTP.", response.getBody());
+        verify(session, never()).setAttribute("otpVerified", true);
     }
 
     @Test
-    void testVerifyOtp_Successful() {
+    void verifyOtp_ShouldReturnUnauthorizedWhenOtpIsNull() {
         // Arrange
-        Users newUser = new Users();
-        when(session.getAttribute("otp")).thenReturn("1234");
-        when(session.getAttribute("otpExpiry")).thenReturn(System.currentTimeMillis() + 10000);
-        when(session.getAttribute("currentUser")).thenReturn(newUser);
-        when(userRepository.save(newUser)).thenReturn(newUser);
+        when(session.getAttribute("otp")).thenReturn(null);
+        when(session.getAttribute("otpExpiry")).thenReturn(null);
 
         // Act
         ResponseEntity<String> response = userService.verifyOtp("1234");
 
         // Assert
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("OTP verified successfully!", response.getBody());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("OTP expired. Please request a new one.", response.getBody());
         verify(session, times(1)).removeAttribute("otp");
         verify(session, times(1)).removeAttribute("otpExpiry");
-        verify(userRepository, times(1)).save(newUser);
     }
 }

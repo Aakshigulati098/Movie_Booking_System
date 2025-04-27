@@ -5,7 +5,6 @@ import com.example.movie_booking_system.exceptions.*;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
-import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;

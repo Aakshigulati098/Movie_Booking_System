@@ -514,4 +514,6 @@ class RedisServiceTest {
         assertNull(result);
         verify(logger).info("No bids found in Redis leaderboard for auctionId: " + auctionId);
     }
+
+
 }

@@ -3,7 +3,7 @@ package com.example.movie_booking_system.service;
 import com.example.movie_booking_system.dto.AuctionResultDTO;
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.dto.PendingAuctionDTO;
-import com.example.movie_booking_system.dto.createAuctionDTO;
+import com.example.movie_booking_system.dto.CreateAuctionDTO;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.AuctionWinnerRepository;
@@ -110,7 +110,7 @@ class AuctionServiceTest {
         testAuction.setStatus(AuctionStatus.PENDING);
         testAuction.setCreatedAt(LocalDateTime.now());
         testAuction.setEndsAt(LocalDateTime.now().plusMinutes(60));
-        testAuction.setMin_Amount(100L);
+        testAuction.setMinAmount(100L);
         testAuction.setSeller(testUser);
         testAuction.setBookingId(testBooking);
 
@@ -124,10 +124,10 @@ class AuctionServiceTest {
     @Test
     void createAuction_Success() {
         // Arrange
-        createAuctionDTO dto = new createAuctionDTO();
-        dto.setUserId(1L);
-        dto.setBookingId(1L);
-        dto.setMinAmount(100L);
+        CreateAuctionDTO dto = new CreateAuctionDTO(1L,1L,100L,200L);
+//        dto.setUserId(1L);
+//        dto.setBookingId(1L);
+//        dto.setMinAmount(100L);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
@@ -141,7 +141,7 @@ class AuctionServiceTest {
         verify(auctionRepository).save(auctionCaptor.capture());
         Auction capturedAuction = auctionCaptor.getValue();
         assertEquals(AuctionStatus.PENDING, capturedAuction.getStatus());
-        assertEquals(100L, capturedAuction.getMin_Amount());
+        assertEquals(100L, capturedAuction.getMinAmount());
         assertEquals(testUser, capturedAuction.getSeller());
         assertEquals(testBooking, capturedAuction.getBookingId());
         verify(redisService).saveAuctionMetadata(eq(1L), eq("ACTIVE"), any(LocalDateTime.class));
@@ -427,7 +427,7 @@ class AuctionServiceTest {
         // Assert
         verify(auctionRepository).findById(1L);
         assertEquals(AuctionStatus.SOLD, testAuction.getStatus());
-        verify(bookingService).TransferBooking(eq(1L), eq(2L),  anyLong());
+        verify(bookingService).transferBooking(eq(1L), eq(2L),  anyLong());
         verify(auctionRepository).delete(testAuction);
 
         // Run after-commit callbacks to verify WebSocket call
@@ -453,7 +453,7 @@ class AuctionServiceTest {
     void handleAcceptance_BookingTransferError() {
         // Arrange
         when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-        doThrow(new RuntimeException("Booking transfer error")).when(bookingService).TransferBooking(anyLong(), anyLong(), anyLong());
+        doThrow(new RuntimeException("Booking transfer error")).when(bookingService).transferBooking(anyLong(), anyLong(), anyLong());
 
         // Act & Assert
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
@@ -502,7 +502,7 @@ class AuctionServiceTest {
 
         // Assert
         verify(auctionRepository).findById(1L);
-        verify(bookingService).TransferBooking(eq(1L), eq(2L), eq(expectedAmount));
+        verify(bookingService).transferBooking(eq(1L), eq(2L), eq(expectedAmount));
         verify(auctionRepository).delete(testAuction);
 
         // Run after-commit callbacks to verify WebSocket call
