@@ -1,13 +1,20 @@
 version: '3'
+networks:
+  kafka-net:
+    driver: bridge
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    networks:
+      - kafka-net
+    ports:
+      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_MAX_CLIENT_CNXNS: 0
-    ports:
-      - "2181:2181"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "2181"]
       interval: 10s
@@ -16,11 +23,12 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:latest
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+    container_name: kafka
+    networks:
+      - kafka-net
     ports:
       - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -30,15 +38,23 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       TZ: "Asia/Kolkata"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "29092"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: movie-booking-system:latest
+    container_name: movie-booking-app
+    networks:
+      - kafka-net
     ports:
       - "9090:9090"
     environment:
