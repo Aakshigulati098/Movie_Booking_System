@@ -1,9 +1,9 @@
-package com.example.movie_booking_system.KafkaConsumer;
+package com.example.movie_booking_system.kafkaconsumer;
 
 
 import com.example.movie_booking_system.dto.AuctionResultDTO;
 import com.example.movie_booking_system.service.AuctionService;
-import com.example.movie_booking_system.service.NotificationService;
+
 import com.example.movie_booking_system.service.RedisService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,22 +25,22 @@ public class ActionResultConsumer {
 
     private static final Logger logger = Logger.getLogger(ActionResultConsumer.class.getName());
 
-    @Autowired
-    private NotificationService notificationService;
 
-    @Autowired
     private AuctionService auctionService;
-    @Autowired
     private RedisService redisService;
 
-
-    @Autowired
-    @Qualifier("stringKafkaTemplate")
     private KafkaTemplate<String, String> kafkaTemplate;
 
+    @Autowired
+    public ActionResultConsumer(AuctionService auctionService, RedisService redisService, @Qualifier("stringKafkaTemplate") KafkaTemplate<String, String> kafkaTemplate) {
+        this.auctionService = auctionService;
+        this.redisService = redisService;
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
     @KafkaListener(topics = "${auction.kafka.topic.expired}", groupId = "${spring.kafka.consumer.group-id}")
-    public void consume(ConsumerRecord<String, AuctionResultDTO> record) {
-        AuctionResultDTO result = record.value();
+    public void consume(ConsumerRecord<String, AuctionResultDTO> myRecord) {
+        AuctionResultDTO result = myRecord.value();
         logger.info("Received auction result: " + result.getAuctionId());
         try {
 
@@ -48,7 +48,7 @@ public class ActionResultConsumer {
 //            write the logic to generate the zset leaderboard for redis although i will just call the redis service her e
             redisService.createAndSaveLeaderboard(result.getAuctionId(), result.getLeaderboard());
             logger.info("so i have persisted the leaderboard in redis for auction ID: " + result.getAuctionId());
-            System.out.println("and now i would be producing a message to a new kafka topic which will be consumed by the notification service");
+            logger.info("and now i would be producing a message to a new kafka topic which will be consumed by the notification service");
             // Produce a message to the new Kafka topic
                 String key = "auction:" + result.getAuctionId() + ":leaderboard";
 
@@ -93,8 +93,8 @@ public class ActionResultConsumer {
 
 
             // Send notifications to participants
-//            notificationService.notifyAuctionParticipants(result);
-//            logger.info("Notifications sent for auction ID: " + result.getAuctionId());
+
+
 
         } catch (Exception e) {
             logger.severe("Error processing auction result: " + e.getMessage());

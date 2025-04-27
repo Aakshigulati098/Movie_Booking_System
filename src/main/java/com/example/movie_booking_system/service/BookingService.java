@@ -1,7 +1,7 @@
 package com.example.movie_booking_system.service;
 
-import com.example.movie_booking_system.KafkaConsumer.ActionResultConsumer;
 import com.example.movie_booking_system.dto.BookingResponseDTO;
+import com.example.movie_booking_system.exceptions.*;
 import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.models.*;
 import com.example.movie_booking_system.repository.*;
@@ -14,50 +14,52 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
 
     private static final Logger logger = Logger.getLogger(BookingService.class.getName());
+    private static final String BOOKING_NOT_FOUND = "Booking not found with ID: ";
+    private static final String SEAT_NOT_FOUND = "Seat not found with ID: ";
 
 
-    @Autowired
-    private AuctionWinnerRepository auctionWinnerRepository;
-    @Autowired
+
     private BookingRepository bookingRepository;
-    @Autowired
     private TheatreRepository theatreRepository;
-
-    @Autowired
     private MovieRepository movieRepository;
+    private EmailSenderService emailSenderService;
 
-    @Autowired
-    EmailSenderService emailSenderService;
-    @Autowired
-    private AuctionRepository auctionRepository;
-
-    @Autowired
     private SeatsRepository seatsRepository;
-//    seat mai bss avialable hai ke nahi woh dikhani hai
-//    and the fact that woh showtime specific hai so no worries woh either available hogi ya fir nahi
-
-    @Autowired
     private UserRepository userRepository;
-//    everything related to user is being handled by om
+    private ShowTimeRepository showTimeRepository;
+    private WebSocketService webSocketService;
 
     @Autowired
-    private ShowTimeRepository showTimeRepository;
-    @Autowired
-    private WebSocketService webSocketService;
+    public BookingService(BookingRepository bookingRepository,
+                          TheatreRepository theatreRepository,
+                          MovieRepository movieRepository,
+                          EmailSenderService emailSenderService,
+
+                          SeatsRepository seatsRepository,
+                          UserRepository userRepository,
+                          ShowTimeRepository showTimeRepository,
+                          WebSocketService webSocketService) {
+        this.bookingRepository = bookingRepository;
+        this.theatreRepository = theatreRepository;
+        this.movieRepository = movieRepository;
+        this.emailSenderService = emailSenderService;
+
+        this.seatsRepository = seatsRepository;
+        this.userRepository = userRepository;
+        this.showTimeRepository = showTimeRepository;
+        this.webSocketService = webSocketService;
+    }
 
 //    @Autowired
 //    private PaymentService paymentService; // Inject Payment Service
-
 
     public Long getSeatId(Long seatNumber, Long showtimeId) {
         return seatsRepository.findSeatIdBySeatNumberAndShowtime(seatNumber, showtimeId)
@@ -68,40 +70,43 @@ public class BookingService {
 
     //    need to handle the runtime exception here
     @Transactional
-    public boolean booking_Movie(Long user_id, List<Long> seatId,Long movie_id) throws MessagingException {
+    public boolean bookingMovie(Long userId, List<Long> seatId, Long movieId)  {
 
-        Users user = userRepository.findById(user_id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
         for(Long seat: seatId){
             Seats seats = seatsRepository.findById(seat)
-                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
-            if (!seats.getSeatAvailable()) {
-                throw new RuntimeException("Seat is already booked!");
+                    .orElseThrow(() -> new SeatNotFoundException(SEAT_NOT_FOUND + seat));
+            if (Boolean.FALSE.equals(seats.getSeatAvailable())) {
+                throw new SeatAlreadyBookedException("Seat is already booked!");
             }
-            ShowTime showtime = showTimeRepository.findById(seats.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seats.getShowtime().getId()));
-
 
             // Mark seat as booked
             seats.setSeatAvailable(false);
             seatsRepository.save(seats);
-
-//            idhar tak ho gaya hai jo hona hai sare unavailable
-
         }
-//        Users user = userRepository.findById(user_id)
-//                .orElseThrow(() -> new RuntimeException("User not found with ID: " + user_id));
-//
+
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+
         String email = user.getEmail();
         String name = user.getName();
 
-        Seats seat = seatsRepository.findById(seatId.get(0)).orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId.get(0)));
-        ShowTime showtime = showTimeRepository.findById(seat.getShowtime().getId()).orElseThrow(() -> new RuntimeException("Showtime not found with ID: " + seat.getShowtime().getId()));
-        String showTime = showtime.getTime();
-        Theatre theatre = theatreRepository.findById(showtime.getTheatre().getId()).orElseThrow(() -> new RuntimeException("Theatre not found"));
-        String theatre_name = theatre.getName();
+        Seats seat = seatsRepository.findById(seatId.get(0))
+                .orElseThrow(() -> new SeatNotFoundException(SEAT_NOT_FOUND + seatId.get(0)));
 
-        Movie movie = movieRepository.findById(movie_id).orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movie_id));
-        String movie_name = movie.getTitle();
+        ShowTime showtime = showTimeRepository.findById(seat.getShowtime().getId())
+                .orElseThrow(() -> new ShowTimeNotFoundException("Showtime not found with ID: " + seat.getShowtime().getId()));
+
+        String showTime = showtime.getTime();
+
+        Theatre theatre = theatreRepository.findById(showtime.getTheatre().getId())
+                .orElseThrow(() -> new TheatreNotFoundException("Theatre not found"));
+
+        String theatreName = theatre.getName();
+
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found with ID: " + movieId));
+
+        String movieName = movie.getTitle();
         LocalDate currentDate = LocalDate.now();
 
         // Convert the date to a string using the default format (ISO-8601)
@@ -110,37 +115,42 @@ public class BookingService {
         StringBuilder seatDetails = new StringBuilder();
         for (Long seatIds : seatId) {
             Seats s = seatsRepository.findById(seatIds)
-                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatIds));
+                    .orElseThrow(() -> new SeatNotFoundException(SEAT_NOT_FOUND+ seatIds));
             seatDetails.append("Row: ").append(s.getSeatRow()).append(", Number: ").append(s.getSeatNumber()).append("; ");
         }
 
-//        booking ki entry banani hai
-        Booking booking =new Booking();
+        // booking ki entry banani hai
+        Booking booking = new Booking();
         booking.setUser(user);
         booking.setAmount(showtime.getPrice());
-        booking.setBooking_date(LocalDateTime.now());
+        booking.setBookingDate(LocalDateTime.now());
         booking.setSeatIds(seatDetails.toString());
         booking.setShowtime(showtime);
         booking.setUser(user);
         booking.setMovie(movie);
+        booking.setBookingStatus(BookingEnum.OWNED);
 
         bookingRepository.save(booking);
 
-
-//        send the mail only it is done !!!
-        triggerMail(email, name, theatre_name, movie_name, dateString, showTime, seatDetails.toString());
+        // send the mail only it is done !!!
+        triggerMail(email, name, theatreName, movieName, dateString, showTime, seatDetails.toString());
 
         return true;
     }
 
-    public BookingResponseDTO get_booking_details(Long user_id, Long booking_id) {
+    public BookingResponseDTO getBookingDetails(Long userId, Long bookingId) {
+        // Use specific BookingNotFoundException
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(BOOKING_NOT_FOUND+ bookingId));
 
-        Booking booking = bookingRepository.findById(booking_id).orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));//custom exception handling
-        if (!Objects.equals(booking.getUser().getId(), user_id)) {
-            throw new RuntimeException("User is not authorized to cancel this booking.");
+        // Use specific UnauthorizedAccessException
+        if (!Objects.equals(booking.getUser().getId(), userId)) {
+            throw new UnauthorizedAccessException("User is not authorized to access this booking.");
         }
 
-//        isko booking responseDTO mai convert karo chup chap
+        logger.info("hey the booking status is "+booking.getBookingStatus());
+
+        // Convert to BookingResponseDTO (unchanged)
         BookingResponseDTO bookingResponseDTO = new BookingResponseDTO();
         bookingResponseDTO.setBookingId(booking.getId());
         bookingResponseDTO.setMovieName(booking.getMovie().getTitle());
@@ -148,24 +158,22 @@ public class BookingService {
         bookingResponseDTO.setSeats(booking.getSeatIds());
         bookingResponseDTO.setShowtime(booking.getShowtime().getTime());
         bookingResponseDTO.setMovieImage(booking.getMovie().getImage());
-
+        bookingResponseDTO.setBookingStatus(booking.getBookingStatus());
 
         return bookingResponseDTO;
-
     }
 
     //    here i am using transactional not for concurrency but if for any reason the refund is failed
 //    i should keep the booking and not betray the user
-//    !TODO-> i need to provide useful responses to frontend such that proper experience is there for the user
     @Transactional
-    public Boolean Cancelling_booking_movie(Long user_id, Long booking_id) {
-        // Fetch the booking, throw exception if not found
-        Booking booking = bookingRepository.findById(booking_id)
-                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + booking_id));
+    public Boolean cancellingBookingMovie(Long userId, Long bookingId) {
+        // Fetch the booking, throw specific exception if not found
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(BOOKING_NOT_FOUND + bookingId));
 
         // Check if the booking belongs to the user
-        if (!Objects.equals(booking.getUser().getId(), user_id)) {
-            throw new RuntimeException("User is not authorized to cancel this booking.");
+        if (!Objects.equals(booking.getUser().getId(), userId)) {
+            throw new UnauthorizedAccessException("User is not authorized to cancel this booking.");
         }
 
         // Parse seat details string to get seat information
@@ -175,25 +183,20 @@ public class BookingService {
         // Mark seats as available
         for (Long seatId : seatIds) {
             Seats seat = seatsRepository.findById(seatId)
-                    .orElseThrow(() -> new RuntimeException("Seat not found with ID: " + seatId));
+                    .orElseThrow(() -> new SeatNotFoundException(SEAT_NOT_FOUND + seatId));
             seat.setSeatAvailable(true);
             seatsRepository.save(seat);
         }
 
-        // TODO: Call the payment service for refund process
-        boolean refundSuccessful = true;
+        // Mocking refund true here can be extended to be dynamic
 
-        if (refundSuccessful) {
-            // Remove the booking from the database
-            bookingRepository.deleteById(booking_id);
-            return true;
-        } else {
-            throw new RuntimeException("Refund failed, booking is retained.");
-        }
+        // Remove the booking from the database
+        bookingRepository.deleteById(bookingId);
+        return true;
     }
 
     // Helper method to parse seat details string and extract seat IDs
-    public List<Long> parseSeatDetails(String seatDetailsString) {
+    private List<Long> parseSeatDetails(String seatDetailsString) {
         List<Long> seatIds = new ArrayList<>();
 
         // Split the seat details string into individual seat entries
@@ -222,52 +225,53 @@ public class BookingService {
         return seatIds;
     }
 
-    public void triggerMail(String email, String name, String theatre_name, String movie_name, String Date, String showtime, String Seats) throws MessagingException {
-//
-//
+    public void triggerMail(String email, String name, String theatreName, String movieName, String date, String showtime, String seats)  {
 
         emailSenderService.sendBookingConfirmationEmail(
                 email,   // Recipient's email
                 name,           // UserName
-                theatre_name,               // TheaterName
-                movie_name,         // MovieName
-                Date,                // Date
+                theatreName,               // TheaterName
+                movieName,         // MovieName
+                date,                // Date
                 showtime,                   // ShowTime
-                Seats                   // SeatNumber
+                seats                   // SeatNumber
         );
     }
 
 
     public List<BookingResponseDTO> getAllBookings(Long userId) {
         List<Booking> bookings = bookingRepository.findAllByUserId(userId);
-        return bookings.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return bookings.stream().map(this::convertToDTO).toList();
     }
 
-    public BookingResponseDTO convertToDTO(Booking booking) {
+    private BookingResponseDTO convertToDTO(Booking booking) {
         return new BookingResponseDTO(
                 booking.getId(),
                 booking.getShowtime().getTheatre().getName(),
                 booking.getSeatIds(),
                 booking.getShowtime().getTime(),
                 booking.getMovie().getTitle(),
-                booking.getMovie().getImage());
+                booking.getMovie().getImage(),
+                booking.getBookingStatus());
     }
 
-    public void TransferBooking(Long id, Long userId, Long finalAmount) {
+    public void transferBooking(Long id, Long userId, Long finalAmount) {
 
         logger.info("hey i am in transfer booking method");
 
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException(BOOKING_NOT_FOUND + id));
         // Update the booking details
 
         booking.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId)));
         booking.setAmount(finalAmount);
+        booking.setBookingStatus(BookingEnum.AUCTIONED);
         bookingRepository.save(booking);
         logger.info("Booking transferred successfully to user with ID: " + userId);
 //        abhi websocket topic broadcast karna hai jo ki frontend pe bhi reflect hoga
         webSocketService.sendBookingTransferNotification(id);
         logger.info("WebSocket notification sent for booking transfer with ID: " + id);
-    }
 
+
+    }
 }

@@ -1,6 +1,6 @@
 package com.example.movie_booking_system.dto;
 
-public class createAuctionDTO {
+public class CreateAuctionDTO {
     private Long bookingId;
     private Long userId;
     private Long showtime;
@@ -42,7 +42,7 @@ public class createAuctionDTO {
         this.minAmount = minAmount;
     }
 
-    public createAuctionDTO(Long bookingId, Long userId, Long showtime, Long minAmount) {
+    public CreateAuctionDTO(Long bookingId, Long userId, Long showtime, Long minAmount) {
         this.bookingId = bookingId;
         this.userId = userId;
         this.showtime = showtime;

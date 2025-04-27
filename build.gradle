@@ -10,6 +10,7 @@ sonar {
 		property 'sonar.projectName', 'wissen-entertainments'
 		property 'sonar.host.url', 'http://localhost:9000'
 		property 'sonar.token', 'sqp_b4d9040038c0b45de831f12c3af113454e714688'
+		property 'sonar.gradle.skipCompile', 'true'  // Add this line
 	}
 }
 

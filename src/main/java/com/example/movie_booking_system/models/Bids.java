@@ -65,7 +65,9 @@ public class Bids {
         this.createdAt = createdAt;
     }
 
-    public Bids(){};
+    public Bids(){
+        // Default constructor
+    }
 
     public Bids(Long id, Users userId, Auction auctionId, Long bidAmount, LocalDateTime createdAt) {
         this.id = id;

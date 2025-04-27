@@ -3,9 +3,11 @@ import com.example.movie_booking_system.dto.MovieDTO;
 import com.example.movie_booking_system.models.Movie;
 import com.example.movie_booking_system.service.MovieService;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -15,10 +17,13 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class MovieController {
-    @Autowired
-    private MovieService movieService;
 
-//    this is the hello world api to check if the server is running
+    private MovieService movieService;
+    @Autowired
+    public MovieController(MovieService movieService) {
+        this.movieService = movieService;
+    }
+
 
     @GetMapping("//")
     public String home() {
@@ -55,7 +60,7 @@ public class MovieController {
     }
 
     @GetMapping("/nowShowing")
-    public ResponseEntity<List<MovieDTO>> getNowShowingMovies() {
+    public ResponseEntity< List<MovieDTO>> getNowShowingMovies() {
         try {
             return new ResponseEntity<>(movieService.nowShowing(), HttpStatus.OK);
         } catch (ResponseStatusException e) {

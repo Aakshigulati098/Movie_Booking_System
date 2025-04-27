@@ -6,14 +6,12 @@ public class BidDTO {
     private Long userId;
     private Long amount;
 
-    public BidDTO() {}
-
-
-    public BidDTO(Long auctionId, Long userId, Long amount) {
-        this.auctionId = auctionId;
-        this.userId = userId;
-        this.amount = amount;
+    public BidDTO() {
+//        no args constructor
     }
+
+
+
 
     public Long getAuctionId() {
         return auctionId;

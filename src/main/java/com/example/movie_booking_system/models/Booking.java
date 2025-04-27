@@ -3,7 +3,7 @@ package com.example.movie_booking_system.models;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Entity
 @Table(name = "booking")
@@ -32,6 +32,16 @@ public class Booking {
     private String seatIds;
 
     private boolean reminderSent = false;
+
+    private BookingEnum bookingStatus;
+
+    public BookingEnum getBookingStatus() {
+        return bookingStatus;
+    }
+
+    public void setBookingStatus(BookingEnum bookingStatus) {
+        this.bookingStatus = bookingStatus;
+    }
 
     public Booking() {
     }
@@ -76,12 +86,14 @@ public class Booking {
         this.amount = amount;
     }
 
-    public LocalDateTime getBooking_date() {
-        return booking_date;
+
+
+    public void setBookingDate(LocalDateTime bookingDate) {
+        this.booking_date = bookingDate;
     }
 
-    public void setBooking_date(LocalDateTime booking_date) {
-        this.booking_date = booking_date;
+    public LocalDateTime getBookingDate() {
+        return booking_date;
     }
 
     public String getSeatIds() {
@@ -100,12 +112,12 @@ public class Booking {
         this.reminderSent = reminderSent;
     }
 
-    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime booking_date, String seat) {
+    public Booking(Long id, Users user, ShowTime showtime, Long amount, LocalDateTime bookingDate, String seat) {
         this.id = id;
         this.user = user;
         this.showtime = showtime;
         this.amount = amount;
-        this.booking_date = booking_date;
+        this.booking_date = bookingDate;
         this.seatIds = seat;
     }
 }

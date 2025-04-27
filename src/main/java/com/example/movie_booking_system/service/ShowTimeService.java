@@ -24,8 +24,8 @@ public class ShowTimeService {
     }
 
     // get showtime by id
-    public ShowTime getShowTimeById(Long showTime_id) {
-        return showTimeRepository.findById(showTime_id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ShowTime not found with ID: " + showTime_id));
+    public ShowTime getShowTimeById(Long showTimeId) {
+        return showTimeRepository.findById(showTimeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ShowTime not found with ID: " + showTimeId));
     }
 }

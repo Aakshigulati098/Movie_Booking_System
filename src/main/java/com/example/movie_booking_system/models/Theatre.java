@@ -2,7 +2,7 @@ package com.example.movie_booking_system.models;
 
 
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Entity
 @Table(name="theatre")
@@ -44,7 +44,7 @@ public class Theatre {
     public void setDistance(String distance) {
         this.distance = distance;
     }
-//    private String pinCode;
+
 
     public Theatre() {}
 

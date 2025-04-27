@@ -24,22 +24,22 @@ public class SeatsService {
         return seatsRepository.findAll();  // Retrieve all seats from the database
     }
 
-    public Optional<Seats> getSeatById(Long seat_Id) {
-        return seatsRepository.findById(seat_Id);  // Find a seat by its ID
+    public Optional<Seats> getSeatById(Long seatId) {
+        return seatsRepository.findById(seatId);  // Find a seat by its ID
     }
 
-    public List<Seats> getSeatsByShowtime(Long showtime_Id) {
+    public List<Seats> getSeatsByShowtime(Long showtimeId) {
         // Custom query can be added here if you need to find seats by showtime
         // For example, you could have a custom repository method or use JPQL/Criteria
         return seatsRepository.findAll().stream()
-                .filter(seat -> seat.getShowtime().getId().equals(showtime_Id))
+                .filter(seat -> seat.getShowtime().getId().equals(showtimeId))
                 .toList();
     }
-    public Seats updateSeatAvailability(Long seat_Id, Boolean seat_available) {
-        Optional<Seats> seatOpt = seatsRepository.findById(seat_Id);
+    public Seats updateSeatAvailability(Long seatId, Boolean seatAvailable) {
+        Optional<Seats> seatOpt = seatsRepository.findById(seatId);
         if (seatOpt.isPresent()) {
             Seats seat = seatOpt.get();
-            seat.setSeatAvailable(seat_available);  // Update the seat's availability
+            seat.setSeatAvailable(seatAvailable);  // Update the seat's availability
             return seatsRepository.save(seat);  // Save the updated seat back to the database
         }
         return null;

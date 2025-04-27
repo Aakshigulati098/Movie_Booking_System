@@ -23,19 +23,25 @@ public class AuctionAsyncService {
 
     private static final Logger logger = Logger.getLogger(AuctionAsyncService.class.getName());
 
-    @Autowired
+
     private AuctionWinnerRepository auctionWinnerRepository;
-
-    @Autowired
     private WebSocketService webSocketService;
-
-    @Autowired
     private UserRepository userRepository;
+    private AuctionRepository auctionRepository;
+    private OtpEmailController otpEmailController;
 
     @Autowired
-    private AuctionRepository auctionRepository;
-    @Autowired
-    private OtpEmailController otpEmailController;
+    public AuctionAsyncService(AuctionWinnerRepository auctionWinnerRepository,
+                                WebSocketService webSocketService,
+                                UserRepository userRepository,
+                                AuctionRepository auctionRepository,
+                                OtpEmailController otpEmailController) {
+        this.auctionWinnerRepository = auctionWinnerRepository;
+        this.webSocketService = webSocketService;
+        this.userRepository = userRepository;
+        this.auctionRepository = auctionRepository;
+        this.otpEmailController = otpEmailController;
+    }
 
     @Async
     @Transactional
@@ -48,7 +54,7 @@ public class AuctionAsyncService {
                     .orElseThrow(() -> new RuntimeException("Auction not found: " + bidder.getAuctionId()));
             logger.info("the auction id here is "+managedAuction.getId());
 
-//            Users managedWinner = managedAuction.getWinner();
+
 //            managed winner ko auctionWinnerRepository se lena hai
             Users managedWinner= userRepository.findById(bidder.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found: " + bidder.getUserId()));
@@ -85,7 +91,6 @@ public class AuctionAsyncService {
             });
 
         } catch (Exception e) {
-            logger.severe("Error in async auction save & notify: " + e.getMessage());
             throw e;
         }
     }

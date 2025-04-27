@@ -14,15 +14,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 
 @Service
 public class EmailSenderService {
-    @Autowired
+
     private JavaMailSender mailSender;
 
-    //TODO:Re-Use For OTP:
+    @Autowired
+    public EmailSenderService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
+    private static final Logger logger = Logger.getLogger(EmailSenderService.class.getName());
+
+
     public void sendSimpleEmail(String toMail,
                                 String subject,
                                 String body){
@@ -35,7 +42,7 @@ public class EmailSenderService {
 
         mailSender.send(message);
 
-        System.out.println("Mail Sent Successfully... ..");
+       logger.info("Mail Sent Successfully... ..");
     }
 
 
@@ -63,17 +70,17 @@ public class EmailSenderService {
 
         mailSender.send(message);
 
-        System.out.println("OTP Sent Successfully to " + toMail + " with OTP: " + otp);
+        logger.info("OTP Sent Successfully to " + toMail + " with OTP: " + otp);
     }
 
-    //TODO: Booking COnfirmation Sophisticated:
+
     public void sendBookingConfirmationEmail(String toMail,
                                              String userName,
                                              String theaterName,
                                              String movieName,
                                              String date,
                                              String showTime,
-                                             String seatNumber) {
+                                             String seatNumber)  {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
 
 
@@ -100,7 +107,7 @@ public class EmailSenderService {
 
             // Extract the JSON response as a String
             String jsonResponse = response.body();
-            System.out.println("JSON Response: " + jsonResponse);
+            logger.info("JSON Response: " + jsonResponse);
 
 
             // Extract the Poster URL using substring
@@ -112,22 +119,22 @@ public class EmailSenderService {
             String htmlContent = buildEmailTemplate(userName, theaterName, movieName, date, showTime, seatNumber, posterUrl);
             helper.setText(htmlContent, true); // Set "true" for HTML content
 
-            //   TODO:END||Confirm the poster URL --> Save The Poster Temporarily to buffer --> Send Poster As Attachment:
+
 
             mailSender.send(mimeMessage);
 
-            System.out.println("Booking Confirmation Email with Image Sent Successfully... ..");
+            logger.info("Booking Confirmation Email with Image Sent Successfully... ..");
 
         } catch (MessagingException  e) {
-            System.err.println("Error while sending email: " + e.getMessage());
+            logger.info("Error while sending email: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+             throw new IllegalStateException("An error occurred while sending the booking confirmation email", e);
         }
     }
 
 
-    //TODO:Final Confirmation Mail html template:
+
     private String buildEmailTemplate(String userName, String theaterName, String movieName, String date, String showTime, String seatNumber, String posterUrl) {
         return "<!DOCTYPE html>" +
                 "<html>" +

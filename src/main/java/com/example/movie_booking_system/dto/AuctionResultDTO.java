@@ -6,8 +6,9 @@ import java.util.Set;
 public class AuctionResultDTO implements Serializable {
 
     private Long auctionId;
-    private BidDTO winningBid;
-    private Set<BidResponseDTO> leaderboard;
+//    remove transient keyword if found error
+    private transient   BidDTO  winningBid;
+    private transient Set<BidResponseDTO> leaderboard;
     private boolean noBids = false;
 
     // Getters and setters

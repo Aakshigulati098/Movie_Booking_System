@@ -1,7 +1,7 @@
 
-package com.example.movie_booking_system.ListenersRedis;
+package com.example.movie_booking_system.listenersredis;
 
-import com.example.movie_booking_system.constants.ConstantData;
+
 import com.example.movie_booking_system.dto.AuctionResultDTO;
 import com.example.movie_booking_system.dto.BidDTO;
 import com.example.movie_booking_system.dto.BidResponseDTO;
@@ -33,14 +33,17 @@ public class AuctionExpiry implements MessageListener {
     @Value("${auction.kafka.topic.expired}")
     private  String expiredAuctionTopic;
 
-    @Autowired
+
     private RedisMessageListenerContainer redisMessageListenerContainer;
-
-    @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
+    private RedisService redisService;
 
     @Autowired
-    private RedisService redisService;
+    public AuctionExpiry(RedisMessageListenerContainer redisMessageListenerContainer,KafkaTemplate<String, Object> kafkaTemplate,RedisService redisService) {
+        this.redisMessageListenerContainer = redisMessageListenerContainer;
+        this.kafkaTemplate = kafkaTemplate;
+        this.redisService = redisService;
+    }
 
     @PostConstruct
     public void init() {
@@ -79,8 +82,8 @@ public class AuctionExpiry implements MessageListener {
                 result.setWinningBid(winningBid);
                 result.setLeaderboard(redisService.getLeaderboard(auctionId));
 
-                System.out.println("the winning bid here is "+result.getWinningBid());
-                System.out.println("the auction id here is "+result.getAuctionId());
+                logger.info("the winning bid here is "+result.getWinningBid());
+                logger.info("the auction id here is "+result.getAuctionId());
 
                 Set<BidResponseDTO> leaderboard = result.getLeaderboard();
 
@@ -88,16 +91,16 @@ public class AuctionExpiry implements MessageListener {
                 List<BidResponseDTO> sortedLeaderboard = new ArrayList<>(leaderboard);
 
 // Sort by amount (assuming higher bids should come first)
-                sortedLeaderboard.sort((bid1, bid2) -> {
-                    return bid2.getAmount().compareTo(bid1.getAmount()); // Descending order
-                });
+                sortedLeaderboard.sort((bid1, bid2) ->
+                    bid2.getAmount().compareTo(bid1.getAmount()) // Descending order
+                );
                 for (BidResponseDTO bid : sortedLeaderboard) {
-                    System.out.println("BidderId : " + bid.getBidderId()+ ", Bidder : " + bid.getBidder() + ", Amount: " + bid.getAmount()+ ", Auction ID: " + bid.getAuctionId());
+                    logger.info("BidderId : " + bid.getBidderId()+ ", Bidder : " + bid.getBidder() + ", Amount: " + bid.getAmount()+ ", Auction ID: " + bid.getAuctionId());
                 }
 
                 // Publish result to Kafka
                 logger.info("Publishing auction result to Kafka for auction: " + auctionId);
-//                kafkaTemplate.send(expiredAuctionTopic, auctionId.toString(), result);
+
                 CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(expiredAuctionTopic, auctionId.toString(), result);
 
                 future.whenComplete((sendResult, ex) -> {

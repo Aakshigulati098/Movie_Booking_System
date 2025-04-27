@@ -8,7 +8,7 @@ public class UserDTO {
     // Constructors
     public UserDTO() {}
 
-    public UserDTO(String name, String email, String phoneNumber) {
+    public UserDTO(String name,  String phoneNumber) {
         this.name = name;
 
         this.phone = phoneNumber;
