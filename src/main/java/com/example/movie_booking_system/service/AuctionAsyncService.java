@@ -93,5 +93,6 @@ public class AuctionAsyncService {
         } catch (Exception e) {
             throw e;
         }
+
     }
 }

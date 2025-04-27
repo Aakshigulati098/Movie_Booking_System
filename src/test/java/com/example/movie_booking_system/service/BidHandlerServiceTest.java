@@ -93,7 +93,7 @@ public class BidHandlerServiceTest {
     @Test
     void testHandleBid_SuccessfulNewBid() {
         // Arrange
-        when(valueOperations.setIfAbsent(eq("lock:auction:1"), eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
+        when(valueOperations.setIfAbsent(eq("lock:auction:1"),eq("locked"), eq(10L), eq(TimeUnit.SECONDS)))
                 .thenReturn(true);
         when(auctionRepository.findById(1L)).thenReturn(Optional.of(auction));
         when(hashOperations.get("auction1", "status")).thenReturn("ACTIVE");

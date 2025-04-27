@@ -13,22 +13,8 @@ public class Seats {
     @JoinColumn(name = "showtime_id", referencedColumnName = "id", nullable = false)
     private ShowTime showtime;
 
-    public String getSection() {
-        return section;
-    }
-
-    public void setSection(String section) {
-        this.section = section;
-    }
-
-    public String getSeatRow() {
-        return Seatrow;
-    }
-
-
-
     private String section;
-    private String Seatrow;
+    private String seatRow;
 
     private Long seatNumber;
     private Boolean seatAvailable;
@@ -42,7 +28,7 @@ public class Seats {
         this.showtime = showtime;
         this.seatNumber = seatNumber;
         this.seatAvailable = seatAvailable;
-        this.Seatrow=row;
+        this.seatRow=row;
         this.section=section;
     }
 
@@ -79,5 +65,11 @@ public class Seats {
         this.seatAvailable = seatAvailable;
     }
 
+    public String getSeatRow() {
+        return seatRow;
+    }
+    public void setSeatRow(String seatRow) {
+        seatRow = seatRow;
+    }
 
 }

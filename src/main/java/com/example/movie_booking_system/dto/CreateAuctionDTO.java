@@ -6,9 +6,7 @@ public class CreateAuctionDTO {
     private Long showtime;
     private Long minAmount;
 
-    public createAuctionDTO() {
 
-    }
 
     public Long getBookingId() {
         return bookingId;
