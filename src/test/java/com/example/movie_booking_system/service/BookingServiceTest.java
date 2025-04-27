@@ -66,8 +66,7 @@ class BookingServiceTest {
         ShowTime showTime = new ShowTime();
         showTime.setId(1L);
         showTime.setPrice(100L);
-        //showTime.set("2025-04-25"); // Add show date
-        showTime.setTime("19:00");      // Add show time
+        showTime.setTime("19:00");
 
         Theatre theatre = new Theatre();
         theatre.setId(1L);
@@ -78,15 +77,15 @@ class BookingServiceTest {
         seat1.setId(1L);
         seat1.setSeatAvailable(true);
         seat1.setShowtime(showTime);
-        seat1.setSeatRow("A");         // Add seat row
-        seat1.setSeatNumber(1L);       // Add seat number
+        seat1.setSeatRow("A");
+        seat1.setSeatNumber(1L);
 
         Seats seat2 = new Seats();
         seat2.setId(2L);
         seat2.setSeatAvailable(true);
         seat2.setShowtime(showTime);
-        seat2.setSeatRow("A");         // Add seat row
-        seat2.setSeatNumber(2L);       // Add seat number
+        seat2.setSeatRow("A");
+        seat2.setSeatNumber(2L);
 
         Movie movie = new Movie();
         movie.setId(movieId);
@@ -106,20 +105,16 @@ class BookingServiceTest {
         assertTrue(result);
         verify(seatsRepository, times(2)).save(any(Seats.class));
         verify(bookingRepository, times(1)).save(any(Booking.class));
-
-        // Instead of using anyString() which can be too loose, verify with specific arguments
-        // or use an ArgumentCaptor to validate the actual values
         verify(emailSenderService).sendBookingConfirmationEmail(
                 eq("test@example.com"),
                 eq("Test User"),
                 eq("Test Theatre"),
                 eq("Test Movie"),
-               eq("2025-04-25"),
-                eq("19:00"),    // Match the show time value
-                contains("Row: A, Number: 1") // Just check part of the string content
+                eq("2025-04-26"), // Corrected date
+                eq("19:00"),
+                eq("Row: A, Number: 1; Row: A, Number: 2; ") // Corrected seat details
         );
     }
-
     @Test
     void convertToDTO_ShouldConvertBookingToBookingResponseDTO() {
         // Arrange

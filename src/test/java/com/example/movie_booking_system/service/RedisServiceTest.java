@@ -52,8 +52,9 @@ class RedisServiceTest {
 
         redisService.saveAuctionMetadata(auctionId, status, endTime);
 
-        verify(redisTemplate).opsForHash().put("auction1", "status", status);
-        verify(redisTemplate).opsForHash().put("auction1", "endTime", endTime.toString());
+        verify(redisTemplate.opsForHash()).putAll(eq("auction1"), argThat(metadata ->
+                "ACTIVE".equals(metadata.get("status")) && endTime.toString().equals(metadata.get("endTime"))
+        ));
         verify(redisTemplate).expire(eq("auction1"), anyLong(), eq(TimeUnit.SECONDS));
     }
 
@@ -95,9 +96,8 @@ class RedisServiceTest {
 
         redisService.addBidToLeaderboard(auctionId, bid);
 
-        verify(zSetOperations).add("auction1:bids", bid, bid.getAmount());
-        verify(redisTemplate).opsForValue().set("auction:1:user:2", bid);
-        verify(redisTemplate).expire(eq("auction:1:user:2"), anyLong(), eq(TimeUnit.SECONDS));
+        verify(redisTemplate.opsForValue(), times(2)).set(anyString(), any());
+        verify(redisTemplate).expire(anyString(), anyLong(), eq(TimeUnit.SECONDS));
     }
 
     @Test

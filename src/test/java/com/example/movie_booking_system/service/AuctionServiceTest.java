@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -71,6 +72,8 @@ class AuctionServiceTest {
     private Movie testMovie;
     private ShowTime testShowtime;
     private Theatre testTheatre;
+
+    private static final Logger logger = Logger.getLogger(AuctionService.class.getName());
 
     @BeforeEach
     void setUp() {
@@ -481,11 +484,16 @@ class AuctionServiceTest {
         verify(kafkaTemplate).send(anyString(), anyString(), anyString());
         verifyNoInteractions(webSocketService); // WebSocket should not be called on failure
     }
+
     @Test
     void handleAcceptance_WebSocketFailure() {
         // Arrange
         when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
         doThrow(new RuntimeException("WebSocket error")).when(webSocketService).sendAuctionAcceptanceUpdates(anyString());
+
+        // Mock the third argument (e.g., amount or bookingId)
+        Long expectedAmount = 150L; // Example value
+        testAuction.setFinalAmount(expectedAmount);
 
         MockTransactionSynchronizationManager.setup();
 
@@ -494,12 +502,28 @@ class AuctionServiceTest {
 
         // Assert
         verify(auctionRepository).findById(1L);
-        verify(bookingService).TransferBooking(eq(1L), eq(2L), anyLong());
+        verify(bookingService).TransferBooking(eq(1L), eq(2L), eq(expectedAmount));
         verify(auctionRepository).delete(testAuction);
 
         // Run after-commit callbacks to verify WebSocket call
         MockTransactionSynchronizationManager.runAfterCommitCallbacks();
         verify(webSocketService).sendAuctionAcceptanceUpdates("Auction accepted successfully");
+    }
+
+    @Test
+    void handleRejection_ShouldLogErrorAndThrowException() {
+        // Arrange
+        Long auctionId = 1L;
+        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(testAuction));
+        doThrow(new RuntimeException("Kafka error")).when(kafkaTemplate).send(anyString(), anyString(), anyString());
+
+        // Act & Assert
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+                auctionService.handleRejection(auctionId)
+        );
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
+        assertEquals("Failed to process auction rejection", exception.getReason());
+        verify(logger).severe(contains("Error in handleRejection for auction " + auctionId));
     }
     /**
      * Helper class to mock TransactionSynchronizationManager behavior

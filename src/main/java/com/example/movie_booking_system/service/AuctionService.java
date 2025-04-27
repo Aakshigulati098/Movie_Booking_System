@@ -262,9 +262,6 @@ public class AuctionService {
                     logger.info("Sent WebSocket notification for auction acceptance");
                 }
             });
-
-
-
         } catch (Exception e) {
             logger.severe("Error in handleAcceptance: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process auction acceptance");

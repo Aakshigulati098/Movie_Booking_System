@@ -38,8 +38,14 @@ public class RedisService {
     public void saveAuctionMetadata(Long auctionId, String status, LocalDateTime endTime) {
 //        !here this is my key basically for storing the auction status
         String key = "auction" + auctionId;
-        redisTemplate.opsForHash().put(key, "status", status);
-        redisTemplate.opsForHash().put(key, "endTime", endTime.toString());
+        //redisTemplate.opsForHash().put(key, "status", status);
+       // redisTemplate.opsForHash().put(key, "endTime", endTime.toString());
+        Map<String, String> metadata = Map.of(
+                "status", status,
+                "endTime", endTime.toString()
+        );
+        redisTemplate.opsForHash().putAll(key, metadata);
+
         long secondsToExpire = Math.max(0, java.time.Duration.between(LocalDateTime.now(), endTime).getSeconds());
         redisTemplate.expire(key, secondsToExpire, TimeUnit.SECONDS); // Set TTL for 1 hour
 //        we are setting the ttl here so any thing related to expiry in terms of redis can be handled here
@@ -181,7 +187,6 @@ public class RedisService {
             bidResponseDTO.setAmount(bidDTO.getAmount());
             return bidResponseDTO;
         }).collect(Collectors.toSet());
-
     }
 
     @SuppressWarnings("unchecked")
