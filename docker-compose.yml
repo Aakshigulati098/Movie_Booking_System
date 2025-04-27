@@ -1,4 +1,4 @@
-version: '3'
+
 networks:
   kafka-net:
     driver: bridge
@@ -28,13 +28,12 @@ services:
       - kafka-net
     ports:
       - "9092:9092"
-      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://4.240.97.204:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       TZ: "Asia/Kolkata"
@@ -51,7 +50,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: movie-booking-system:latest
+    image: abirrsahaa/movie-booking-system:latest
     container_name: movie-booking-app
     networks:
       - kafka-net
@@ -59,7 +58,7 @@ services:
       - "9090:9090"
     environment:
       TZ: "Asia/Kolkata"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_DATASOURCE_URL: jdbc:postgresql://ep-plain-shadow-a52nf5uo-pooler.us-east-2.aws.neon.tech:5432/neondb?sslmode=require
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 5
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 2
