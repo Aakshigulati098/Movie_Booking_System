@@ -20,6 +20,8 @@ public class UserService {
     private static final String OTP_SESSION_KEY="otpExpiry";
 
 
+
+
     private HttpSession session;
     private OtpEmailController otpEmailController;
     private UserRepository userRepository;
@@ -42,6 +44,7 @@ public class UserService {
         Users newUser = new Users();
         newUser.setPassword(passwordEncoder.encode(user.getPassword()));
         newUser.setName(user.getName());
+
         newUser.setEmail(user.getEmail());
         newUser.setPhone(user.getPhone());
         newUser.setAddress(user.getAddress());
@@ -50,7 +53,11 @@ public class UserService {
         String otp = String.format("%04d", new Random().nextInt(10000));
         long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000);
 
+        session.setAttribute("currentUserName", newUser.getName());
+        session.setAttribute("currentUserEmail", newUser.getEmail());
+
         session.setAttribute("currentUser", newUser.toString());
+
         session.setAttribute("otp", otp);
         session.setAttribute(OTP_SESSION_KEY, expiryTime);
 
@@ -77,6 +84,11 @@ public class UserService {
         session.setAttribute("otpVerified", true);
         session.removeAttribute("otp");
         session.removeAttribute(OTP_SESSION_KEY);
+//        trigger welcome mail here and let the user give a great user experience
+
+        otpEmailController.sendWelcomeEmail((String)session.getAttribute("currentUserName"),(String)session.getAttribute("currentUserEmail")
+        );
+
 
 
         return ResponseEntity.ok("OTP verified successfully!");

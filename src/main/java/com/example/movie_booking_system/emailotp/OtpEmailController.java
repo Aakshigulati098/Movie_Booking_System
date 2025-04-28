@@ -193,66 +193,191 @@ public class OtpEmailController {
 
     private String buildWelcomeEmailTemplate(String name) {
         return "<!DOCTYPE html>" +
-                "<html>" +
+                "<html lang='en'>" +
                 "<head>" +
+                "    <meta charset='UTF-8'>" +
+                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
                 "    <style>" +
+                "        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');" +
                 "        body {" +
-                "            font-family: Arial, sans-serif;" +
+                "            font-family: 'Montserrat', Arial, sans-serif;" +
                 "            margin: 0;" +
                 "            padding: 0;" +
-                "            background-color: #f9f9f9;" +
+                "            background-color: #121212;" +
+                "            color: #333;" +
                 "        }" +
                 "        .container {" +
                 "            max-width: 600px;" +
                 "            margin: 20px auto;" +
-                "            background: #ffffff;" +
-                "            padding: 20px;" +
-                "            border-radius: 8px;" +
-                "            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" +
+                "            background: linear-gradient(145deg, #ffffff, #f5f7fa);" +
+                "            padding: 0;" +
+                "            border-radius: 12px;" +
+                "            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);" +
+                "            overflow: hidden;" +
                 "        }" +
                 "        .header {" +
-                "            background-color: #1a2d58;" +
+                "            background: linear-gradient(135deg, #5233a5 0%, #3b1c94 100%);" +
                 "            color: #ffffff;" +
-                "            padding: 10px;" +
+                "            padding: 30px 20px;" +
                 "            text-align: center;" +
-                "            border-radius: 8px 8px 0 0;" +
+                "        }" +
+                "        .logo {" +
+                "            margin-bottom: 15px;" +
                 "        }" +
                 "        .header h1 {" +
                 "            margin: 0;" +
-                "            font-size: 24px;" +
+                "            font-size: 28px;" +
+                "            font-weight: 700;" +
+                "            letter-spacing: 1px;" +
+                "        }" +
+                "        .header p {" +
+                "            margin: 10px 0 0;" +
+                "            font-size: 16px;" +
+                "            opacity: 0.9;" +
+                "        }" +
+                "        .hero-image {" +
+                "            width: 100%;" +
+                "            height: 200px;" +
+                "            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&h=200');" +
+                "            background-size: cover;" +
+                "            background-position: center;" +
+                "            position: relative;" +
                 "        }" +
                 "        .content {" +
-                "            text-align: center;" +
-                "            padding: 20px;" +
+                "            padding: 30px 40px;" +
                 "        }" +
-                "        .otp {" +
-                "            font-size: 36px;" +
-                "            font-weight: bold;" +
-                "            margin: 20px 0;" +
-                "            color: #1a2d58;" +
+                "        .greeting {" +
+                "            font-size: 20px;" +
+                "            font-weight: 500;" +
+                "            margin-bottom: 20px;" +
+                "            color: #333;" +
+                "        }" +
+                "        .message {" +
+                "            line-height: 1.6;" +
+                "            margin-bottom: 25px;" +
+                "            color: #555;" +
+                "        }" +
+                "        .benefits {" +
+                "            background-color: #f8f9fa;" +
+                "            border-radius: 8px;" +
+                "            padding: 20px;" +
+                "            margin-bottom: 25px;" +
+                "        }" +
+                "        .benefits h3 {" +
+                "            margin-top: 0;" +
+                "            color: #3b1c94;" +
+                "            font-size: 18px;" +
+                "        }" +
+                "        .benefits ul {" +
+                "            margin: 15px 0 0;" +
+                "            padding-left: 20px;" +
+                "        }" +
+                "        .benefits li {" +
+                "            margin-bottom: 10px;" +
+                "            color: #555;" +
+                "        }" +
+                "        .cta-button {" +
+                "            display: block;" +
+                "            text-align: center;" +
+                "            background: linear-gradient(135deg, #5233a5 0%, #3b1c94 100%);" +
+                "            color: white;" +
+                "            text-decoration: none;" +
+                "            padding: 14px 20px;" +
+                "            border-radius: 50px;" +
+                "            font-weight: 600;" +
+                "            font-size: 16px;" +
+                "            margin: 30px auto;" +
+                "            width: 80%;" +
+                "            box-shadow: 0 4px 10px rgba(59, 28, 148, 0.3);" +
+                "            transition: transform 0.3s ease;" +
+                "        }" +
+                "        .cta-button:hover {" +
+                "            transform: translateY(-3px);" +
+                "            box-shadow: 0 6px 15px rgba(59, 28, 148, 0.4);" +
+                "        }" +
+                "        .coming-soon {" +
+                "            margin: 30px 0;" +
+                "            text-align: center;" +
+                "        }" +
+                "        .movie-thumbnails {" +
+                "            display: flex;" +
+                "            justify-content: space-between;" +
+                "            margin-top: 15px;" +
+                "        }" +
+                "        .movie-thumbnail {" +
+                "            width: 32%;" +
+                "            height: 120px;" +
+                "            border-radius: 8px;" +
+                "            background-color: #ddd;" +
+                "            overflow: hidden;" +
+                "        }" +
+                "        .social-icons {" +
+                "            text-align: center;" +
+                "            padding: 0 0 20px;" +
+                "        }" +
+                "        .social-icons a {" +
+                "            display: inline-block;" +
+                "            margin: 0 10px;" +
+                "            color: #3b1c94;" +
+                "            font-size: 20px;" +
+                "            text-decoration: none;" +
                 "        }" +
                 "        .footer {" +
-                "            margin-top: 20px;" +
-                "            font-size: 14px;" +
-                "            color: #888;" +
+                "            background-color: #f1f2f6;" +
+                "            padding: 20px;" +
                 "            text-align: center;" +
+                "            font-size: 13px;" +
+                "            color: #777;" +
+                "            border-top: 1px solid #e8e8e8;" +
+                "        }" +
+                "        .footer a {" +
+                "            color: #3b1c94;" +
+                "            text-decoration: none;" +
                 "        }" +
                 "    </style>" +
                 "</head>" +
                 "<body>" +
                 "    <div class='container'>" +
                 "        <div class='header'>" +
-                "            <h1>Welcome to Wissen Entertainments</h1>" +
+                "            <div class='logo'>🎬</div>" +
+                "            <h1>Welcome to CinemagicHub</h1>" +
+                "            <p>Your premier destination for unforgettable cinema experiences</p>" +
                 "        </div>" +
+                "        <div class='hero-image'></div>" +
                 "        <div class='content'>" +
-                "            <p>Dear <strong>" + name + "</strong>,</p>" +
-                "            <p>We are thrilled to have you with us. Thank you to joining our community. We are commited to providing with the best experience possible.</p>" +
-                "            <p>If you have any queries or need assistance, feel free to reach out to our support team.</p>" +
-                "            <p>Best Regards, </p>" +
-                "             <p>The Admin Team </p>" +
+                "            <p class='greeting'>Hello, <strong>" + name + "</strong>!</p>" +
+                "            <p class='message'>We're absolutely thrilled to welcome you to the CinemagicHub family! Your journey into extraordinary cinema experiences begins now. Get ready to discover the magic of movies like never before.</p>" +
+                "            <div class='benefits'>" +
+                "                <h3>What's waiting for you:</h3>" +
+                "                <ul>" +
+                "                    <li><strong>Early Access</strong> to blockbuster tickets and exclusive premieres</li>" +
+                "                    <li><strong>Member Discounts</strong> on tickets, concessions, and merchandise</li>" +
+                "                    <li><strong>Personalized Recommendations</strong> based on your preferences</li>" +
+                "                    <li><strong>Loyalty Points</strong> with every booking that convert to free movies</li>" +
+                "                </ul>" +
+                "            </div>" +
+                "            <div class='coming-soon'>" +
+                "                <h3>Coming Soon to Theaters</h3>" +
+                "                <div class='movie-thumbnails'>" +
+                "                    <div class='movie-thumbnail'></div>" +
+                "                    <div class='movie-thumbnail'></div>" +
+                "                    <div class='movie-thumbnail'></div>" +
+                "                </div>" +
+                "            </div>" +
+                "            <a href='#' class='cta-button'>BOOK YOUR FIRST MOVIE</a>" +
+                "            <p class='message'>We've designed our platform to make movie discovery and booking seamless and enjoyable. If you have any questions or need assistance, our dedicated support team is just a click away.</p>" +
+                "            <p class='message' style='margin-bottom: 5px;'><strong>Lights, Camera, Action!</strong></p>" +
+                "            <p class='message'><em>The CinemagicHub Team</em></p>" +
+                "        </div>" +
+                "        <div class='social-icons'>" +
+                "            <a href='#'>📱</a>" +
+                "            <a href='#'>📷</a>" +
+                "            <a href='#'>📘</a>" +
+                "            <a href='#'>📺</a>" +
                 "        </div>" +
                 "        <div class='footer'>" +
-                "            <p>&copy; 2025 Wissen Entertainments. All rights reserved.</p>" +
+                "            <p>&copy; 2025 CinemagicHub Entertainment. All rights reserved.</p>" +
+                "            <p><a href='#'>Privacy Policy</a> | <a href='#'>Terms of Service</a> | <a href='#'>Unsubscribe</a></p>" +
                 "        </div>" +
                 "    </div>" +
                 "</body>" +
