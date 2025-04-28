@@ -74,19 +74,7 @@ public class NotificationService {
         auctionAsyncService.saveWinnerAndBroadcast(bidder, auction, winner,
                 existingAuction.orElse(null));
         logger.info("Auction updated for " + bidder.getUserId() +" and websocket notification sent");
-//        now need to handle accept and reject thing which is not our headache this will be solved by a diff api
-
-
-
-
-
-//        ab frontend pe home page pe and pending payment page pe ye cheezein update ho jayengi by websocket connection
-//        and also keep a case of when auction ends the auction screen should redirect the user to the home screen or
-//        the main auctions page !
-
-        // For now, just log the notification
-        // You can replace this with your actual notification mechanism
-        // such as email, push notifications, etc.
+//        now need to handle accept and reject thing which is not our headache this will be solved by a diff
     }
 
 //    @SendTo("/")

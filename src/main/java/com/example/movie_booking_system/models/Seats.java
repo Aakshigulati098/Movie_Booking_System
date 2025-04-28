@@ -5,17 +5,17 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "seats")
 public class Seats {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;  // ✅ Renamed from seat_id
+    private Long id; // ✅ Renamed from seat_id
 
     @ManyToOne
     @JoinColumn(name = "showtime_id", referencedColumnName = "id", nullable = false)
     private ShowTime showtime;
 
     private String section;
-    private String seatRow;
-
+    private String Seatrow;
     private Long seatNumber;
     private Boolean seatAvailable;
 
@@ -23,13 +23,13 @@ public class Seats {
     public Seats() {}
 
     // ✅ Constructor
-    public Seats(Long id, ShowTime showtime, Long seatNumber, Boolean seatAvailable,String row,String section) {
+    public Seats(Long id, ShowTime showtime, Long seatNumber, Boolean seatAvailable, String row, String section) {
         this.id = id;
         this.showtime = showtime;
         this.seatNumber = seatNumber;
         this.seatAvailable = seatAvailable;
-        this.seatRow=row;
-        this.section=section;
+        this.Seatrow = row;
+        this.section = section;
     }
 
     // ✅ Getters and Setters
@@ -49,6 +49,22 @@ public class Seats {
         this.showtime = showtime;
     }
 
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
+    }
+
+    public String getSeatRow() {
+        return Seatrow;
+    }
+
+    public void setSeatRow(String seatRow) {
+        this.Seatrow = seatRow;
+    }
+
     public Long getSeatNumber() {
         return seatNumber;
     }
@@ -64,12 +80,4 @@ public class Seats {
     public void setSeatAvailable(Boolean seatAvailable) {
         this.seatAvailable = seatAvailable;
     }
-
-    public String getSeatRow() {
-        return seatRow;
-    }
-    public void setSeatRow(String seatRow) {
-        seatRow = seatRow;
-    }
-
 }

@@ -8,6 +8,7 @@ import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.repository.AuctionRepository;
 import com.example.movie_booking_system.repository.AuctionWinnerRepository;
 import com.example.movie_booking_system.repository.UserRepository;
+import com.example.movie_booking_system.service.MockTransactionSynchronizationManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

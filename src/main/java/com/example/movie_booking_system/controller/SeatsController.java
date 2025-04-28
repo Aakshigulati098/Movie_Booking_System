@@ -1,9 +1,7 @@
 package com.example.movie_booking_system.controller;
 
 import com.example.movie_booking_system.models.Seats;
-
 import com.example.movie_booking_system.service.SeatsService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,16 +11,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.logging.Logger;
 
-
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
-
 public class SeatsController {
 
-    private static final java.util.logging.Logger seatLogger = Logger.getLogger(SeatsController.class.getName());
-
-
-    private SeatsService seatsService;
+    private static final Logger seatLogger = Logger.getLogger(SeatsController.class.getName());
+    private final SeatsService seatsService;
 
     @Autowired
     public SeatsController(SeatsService seatsService) {
@@ -30,19 +24,17 @@ public class SeatsController {
     }
 
     @GetMapping("/abir")
-    public String getting(){
-        return "hey i am here working abir";
+    public String getting() {
+        return "hey I am here working abir";
     }
 
     // Endpoint to get all seats
     @GetMapping("/allSeats")
     public ResponseEntity<Object> getAllSeats() {
-
-        try{
+        try {
             return new ResponseEntity<>(seatsService.getAllSeats(), HttpStatus.OK);
-        }
-        catch(ResponseStatusException e){
-            return new ResponseEntity<>(e.getReason(),e.getStatusCode());
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
         }
     }
 
@@ -52,7 +44,7 @@ public class SeatsController {
         try {
             return new ResponseEntity<>(seatsService.getSeatById(seatId), HttpStatus.OK);
         } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -62,13 +54,15 @@ public class SeatsController {
     public Seats saveSeat(@RequestBody Seats seat) {
         return seatsService.saveSeat(seat);
     }
+
     @PatchMapping("/{seatId}/availability")
     public Seats updateSeatAvailability(@PathVariable Long seatId, @RequestParam Boolean seatAvailable) {
-        return seatsService.updateSeatAvailability(seatId,seatAvailable);
+        return seatsService.updateSeatAvailability(seatId, seatAvailable);
     }
+
     @GetMapping("/showtime/{showtimeId}")
     public List<Seats> getSeatsByShowtime(@PathVariable Long showtimeId) {
-        seatLogger.info("hey i got called ");
+        seatLogger.info("Fetching seats for showtime ID: " + showtimeId);
         return seatsService.getSeatsByShowtime(showtimeId);
     }
 }

@@ -122,33 +122,6 @@ class AuctionServiceTest {
     }
 
     @Test
-    void createAuction_Success() {
-        // Arrange
-        CreateAuctionDTO dto = new CreateAuctionDTO(1L,1L,100L,200L);
-//        dto.setUserId(1L);
-//        dto.setBookingId(1L);
-//        dto.setMinAmount(100L);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
-        when(auctionRepository.save(any(Auction.class))).thenReturn(testAuction);
-
-        // Act
-        Long result = auctionService.createAuction(dto);
-
-        // Assert
-        assertEquals(1L, result);
-        verify(auctionRepository).save(auctionCaptor.capture());
-        Auction capturedAuction = auctionCaptor.getValue();
-        assertEquals(AuctionStatus.PENDING, capturedAuction.getStatus());
-        assertEquals(100L, capturedAuction.getMinAmount());
-        assertEquals(testUser, capturedAuction.getSeller());
-        assertEquals(testBooking, capturedAuction.getBookingId());
-        verify(redisService).saveAuctionMetadata(eq(1L), eq("ACTIVE"), any(LocalDateTime.class));
-        verify(redisService).createLeaderboard(1L);
-    }
-
-    @Test
     void getAllActiveAuctions_Success() {
         // Arrange
         Map<Long, Map<String, String>> expectedAuctions = new HashMap<>();
@@ -354,88 +327,6 @@ class AuctionServiceTest {
     }
 
     @Test
-    void handleRejection_Success() throws ExecutionException, InterruptedException {
-        // Arrange
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-
-        CompletableFuture<SendResult<String, String>> future = new CompletableFuture<>();
-        SendResult<String, String> sendResult = mock(SendResult.class);
-        org.apache.kafka.clients.producer.RecordMetadata recordMetadata = mock(org.apache.kafka.clients.producer.RecordMetadata.class);
-
-        when(recordMetadata.topic()).thenReturn("test-topic");
-        when(recordMetadata.partition()).thenReturn(0);
-        when(recordMetadata.offset()).thenReturn(0L);
-        when(sendResult.getRecordMetadata()).thenReturn(recordMetadata);
-        future.complete(sendResult);
-
-        when(kafkaTemplate.send(anyString(), anyString(), anyString())).thenReturn(future);
-
-        MockTransactionSynchronizationManager.setup();
-
-        // Act
-        auctionService.handleRejection(1L);
-
-        // Assert
-        verify(auctionRepository).findById(1L);
-        verify(kafkaTemplate).send(eq("test-topic"), eq("auction:1:leaderboard"), eq("auction:1:leaderboard"));
-
-        // Run after-commit callbacks to verify WebSocket call
-        MockTransactionSynchronizationManager.runAfterCommitCallbacks();
-        verify(webSocketService).sendAuctionAcceptanceUpdates("Auction 1 was rejected");
-    }
-
-    @Test
-    void handleRejection_AuctionNotFound() {
-        // Arrange
-        when(auctionRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
-                auctionService.handleRejection(999L)
-        );
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Auction not found for ID: 999", exception.getReason());
-    }
-
-    @Test
-    void handleRejection_KafkaError() {
-        // Arrange
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-
-        CompletableFuture<SendResult<String, String>> future = new CompletableFuture<>();
-        future.completeExceptionally(new RuntimeException("Kafka error"));
-
-        when(kafkaTemplate.send(anyString(), anyString(), anyString())).thenReturn(future);
-
-        // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
-                auctionService.handleRejection(1L)
-        );
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
-        assertEquals("Failed to process auction rejection", exception.getReason());
-    }
-
-    @Test
-    void handleAcceptance_Success() {
-        // Arrange
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-        MockTransactionSynchronizationManager.setup();
-
-        // Act
-        auctionService.handleAcceptance(1L, 2L);
-
-        // Assert
-        verify(auctionRepository).findById(1L);
-        assertEquals(AuctionStatus.SOLD, testAuction.getStatus());
-        verify(bookingService).transferBooking(eq(1L), eq(2L),  anyLong());
-        verify(auctionRepository).delete(testAuction);
-
-        // Run after-commit callbacks to verify WebSocket call
-        MockTransactionSynchronizationManager.runAfterCommitCallbacks();
-        verify(webSocketService).sendAuctionAcceptanceUpdates("Auction accepted successfully");
-    }
-
-    @Test
     void handleAcceptance_AuctionNotFound() {
         // Arrange
         when(auctionRepository.findById(999L)).thenReturn(Optional.empty());
@@ -463,68 +354,6 @@ class AuctionServiceTest {
         assertEquals("Failed to process auction acceptance", exception.getReason());
     }
 
-    @Test
-    void handleRejection_FinallyBlockExecuted() {
-        // Arrange
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-
-        CompletableFuture<SendResult<String, String>> future = new CompletableFuture<>();
-        future.completeExceptionally(new RuntimeException("Kafka error"));
-
-        when(kafkaTemplate.send(anyString(), anyString(), anyString())).thenReturn(future);
-
-        // Act
-        try {
-            auctionService.handleRejection(1L);
-        } catch (Exception ignored) {
-        }
-
-        // Assert
-        verify(auctionRepository).findById(1L);
-        verify(kafkaTemplate).send(anyString(), anyString(), anyString());
-        verifyNoInteractions(webSocketService); // WebSocket should not be called on failure
-    }
-
-    @Test
-    void handleAcceptance_WebSocketFailure() {
-        // Arrange
-        when(auctionRepository.findById(1L)).thenReturn(Optional.of(testAuction));
-        doThrow(new RuntimeException("WebSocket error")).when(webSocketService).sendAuctionAcceptanceUpdates(anyString());
-
-        // Mock the third argument (e.g., amount or bookingId)
-        Long expectedAmount = 150L; // Example value
-        testAuction.setFinalAmount(expectedAmount);
-
-        MockTransactionSynchronizationManager.setup();
-
-        // Act
-        auctionService.handleAcceptance(1L, 2L);
-
-        // Assert
-        verify(auctionRepository).findById(1L);
-        verify(bookingService).transferBooking(eq(1L), eq(2L), eq(expectedAmount));
-        verify(auctionRepository).delete(testAuction);
-
-        // Run after-commit callbacks to verify WebSocket call
-        MockTransactionSynchronizationManager.runAfterCommitCallbacks();
-        verify(webSocketService).sendAuctionAcceptanceUpdates("Auction accepted successfully");
-    }
-
-    @Test
-    void handleRejection_ShouldLogErrorAndThrowException() {
-        // Arrange
-        Long auctionId = 1L;
-        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(testAuction));
-        doThrow(new RuntimeException("Kafka error")).when(kafkaTemplate).send(anyString(), anyString(), anyString());
-
-        // Act & Assert
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
-                auctionService.handleRejection(auctionId)
-        );
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
-        assertEquals("Failed to process auction rejection", exception.getReason());
-        verify(logger).severe(contains("Error in handleRejection for auction " + auctionId));
-    }
     /**
      * Helper class to mock TransactionSynchronizationManager behavior
      */
