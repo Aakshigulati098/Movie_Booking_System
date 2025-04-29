@@ -25,18 +25,11 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-
-
-
-
     private PasswordEncoder passwordEncoder;
-
 
     private CustomUserDetails customUserDetails;
 
-
     private UserService userService;
-
 
     private JwtProvider jwtProvider;
 
@@ -103,7 +96,7 @@ public class AuthController {
 
     }
 
-    private Authentication authenticate(String username, String password) {
+    Authentication authenticate(String username, String password) {
         UserDetails userDetails = customUserDetails.loadUserByUsername(username);
         if(userDetails==null){
             throw new BadCredentialsException("invalid email");
