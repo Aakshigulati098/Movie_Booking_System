@@ -56,7 +56,7 @@ public class UserService {
         session.setAttribute("currentUserName", newUser.getName());
         session.setAttribute("currentUserEmail", newUser.getEmail());
 
-        session.setAttribute("currentUser", newUser.toString());
+        session.setAttribute("currentUser", newUser);
 
         session.setAttribute("otp", otp);
         session.setAttribute(OTP_SESSION_KEY, expiryTime);
@@ -66,14 +66,13 @@ public class UserService {
     }
 
     public ResponseEntity<String> verifyOtp(@RequestBody String inputOtp) {
-
         String sessionOtp = (String) session.getAttribute("otp");
         Long otpExpiry = (Long) session.getAttribute(OTP_SESSION_KEY);
-
+        String userName = (String) session.getAttribute("currentUserName");
+        String userEmail = (String) session.getAttribute("currentUserEmail");
 
         if (sessionOtp == null || otpExpiry == null || System.currentTimeMillis() > otpExpiry) {
-            session.removeAttribute("otp"); // Remove expired OTP
-            session.removeAttribute(OTP_SESSION_KEY);
+            cleanupSession();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("OTP expired. Please request a new one.");
         }
 
@@ -81,17 +80,39 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP.");
         }
 
-        session.setAttribute("otpVerified", true);
+        try {
+            Users userDetails = (Users) session.getAttribute("currentUser");
+            if (userDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found.");
+            }
+
+            Users newUser = userRepository.findByEmail(userEmail);
+            if (newUser != null) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("User already exists.");
+            }
+
+
+
+            userRepository.save(userDetails);
+            session.setAttribute("otpVerified", true);
+            otpEmailController.sendWelcomeEmail(userName, userEmail);
+            cleanupSession();
+
+            return ResponseEntity.ok("OTP verified successfully! Account created.");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error during registration: " + e.getMessage());
+        }
+    }
+
+
+    private void cleanupSession() {
         session.removeAttribute("otp");
         session.removeAttribute(OTP_SESSION_KEY);
-//        trigger welcome mail here and let the user give a great user experience
-
-        otpEmailController.sendWelcomeEmail((String)session.getAttribute("currentUserName"),(String)session.getAttribute("currentUserEmail")
-        );
-
-
-
-        return ResponseEntity.ok("OTP verified successfully!");
+        session.removeAttribute("currentUser");
+        session.removeAttribute("currentUserName");
+        session.removeAttribute("currentUserEmail");
     }
 
 

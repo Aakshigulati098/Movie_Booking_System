@@ -6,6 +6,7 @@ import com.example.movie_booking_system.models.Users;
 import com.example.movie_booking_system.service.CustomUserDetails;
 import com.example.movie_booking_system.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -88,6 +89,7 @@ public class AuthController {
 
     @PostMapping("verify-otp")
     public ResponseEntity<String> verifyOtp(@Valid @RequestBody Map<String,String> request){
+
         String inputOtp = request.get("otp");
         return userService.verifyOtp(inputOtp);
     }
